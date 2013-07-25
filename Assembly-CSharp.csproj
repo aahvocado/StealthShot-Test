@@ -44,10 +44,12 @@
 	</Reference>
   </ItemGroup>
   <ItemGroup>
+     <Compile Include="Assets\FindFaces.cs" />
      <Compile Include="Assets\MouseMove.cs" />
-     <Compile Include="Assets\OverlapSphere.cs" />
      <Compile Include="Assets\RaycastShadows.cs" />
      <Compile Include="Assets\RaycastShadowsOrig.cs" />
+     <Compile Include="Assets\Resources\Scripts\GeometricVisibility.cs" />
+     <Compile Include="Assets\Resources\Scripts\VisibilityFader.cs" />
      <None Include="Assets\ShadowShader.shader" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

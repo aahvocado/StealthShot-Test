@@ -1,12 +1,15 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="../Desktop/Apocalypse Golf Offline/Assets/HighScore/Highscore.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/FindFaces.cs">
     <Files>
       <File FileName="../Desktop/Apocalypse Golf Offline/Assets/FiringMechanism/AngleAndPowerMesh.cs" Line="175" Column="4" />
       <File FileName="../Desktop/Apocalypse Golf Offline/Assets/Goal Area/AreaSpawn.cs" Line="1" Column="1" />
       <File FileName="../Desktop/Stealthshot offline/Assets/Scripts/PlayerMove.cs" Line="6" Column="1" />
       <File FileName="../Desktop/Stealthshot offline/Assets/Scripts/DrawPlayerShadowMesh.cs" Line="8" Column="1" />
-      <File FileName="../Desktop/Apocalypse Golf Offline/Assets/HighScore/Highscore.cs" Line="395" Column="49" />
+      <File FileName="Assets/FindFaces.cs" Line="52" Column="34" />
+      <File FileName="Assets/mShadowRayScan/ShadowRayScan2.js" Line="1" Column="1" />
+      <File FileName="Assets/TriangleDebug.js" Line="15" Column="34" />
+      <File FileName="Assets/MouseMove.cs" Line="17" Column="62" />
     </Files>
     <Pads>
       <Pad Id="MonoDevelop.Debugger.WatchPad">

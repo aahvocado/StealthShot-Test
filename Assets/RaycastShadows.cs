@@ -53,24 +53,26 @@ Vector3[] vertices;
 			      	{						
 						tmp = meshHolder.transform.InverseTransformPoint(hit.point);
 						vertices[i] = (new Vector3(tmp.x,tmp.y,0));
-						Debug.Log (""+i+ ""+vertices[i]+"");
+//						Debug.Log (""+i+ ""+vertices[i]+"");
+						Debug.Log(hit.triangleIndex);
 						lastHit = true;
+
 					}
 				else
 					{	
 //						if (lastHit == true)
 //							{
-							Debug.Log (""+i+ "");
+//							Debug.Log (""+i+ "");
 							tmp2 = meshHolder.transform.InverseTransformPoint(transform.position+direction);
 							vertices[i] = (new Vector3(tmp2.x,tmp2.y,0));
-							Debug.Log (""+i+ ""+vertices[i]+"");
+//							Debug.Log (""+i+ ""+vertices[i]+"");
 							lastHit = false;
 //							}
 					}
 			
 			}
 		vertices[numberOfRays] = meshHolder.transform.InverseTransformPoint(transform.position);
-		Debug.Log (""+numberOfRays+ ""+vertices[numberOfRays]+"");
+//		Debug.Log (""+numberOfRays+ ""+vertices[numberOfRays]+"");
 		mesh.vertices = vertices;
 	}	
 	
