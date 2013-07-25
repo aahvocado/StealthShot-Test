@@ -32,25 +32,24 @@ public Vector3 rayPos;
 	}	
 
 	void Update ()
-	{	
-//		if (meshDrawn == true)
-//			{
+		{	
 			DetectObjects();
-//			}
+
 		}	
 	
 	void DetectObjects()		
 		{	
-//		angle = 0;
 			Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);							
 			movePos = new Vector3(mousePos.x, mousePos.y, transform.position.z);
 			rayPos  = new Vector3(mousePos.x, mousePos.y, 0);
 				
 				if (Physics.Raycast(transform.position, rayPos, out hit))
 			      	{		
+						// assign mesh of object hit by ray 
 						Mesh meshHit = hit.collider.gameObject.GetComponent<MeshFilter>().mesh;	
-						Debug.Log(meshHit.vertices.Length);
-						vertices = new Vector3[meshHit.vertices.Length];						
+						// determine size of array for vertices of mesh
+						vertices = new Vector3[meshHit.vertices.Length];
+						// translate vertices of mesh into world space
 						for (int i=0; i<meshHit.vertices.Length; i++)
 						{
 						vertices[i] = transform.TransformPoint(meshHit.vertices[i]);
