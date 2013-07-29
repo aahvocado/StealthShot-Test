@@ -10,6 +10,7 @@ bool lastHit;
 bool meshDrawn;
 int numberOfRays;
 int vectorPointNumber = 0;
+public int verticesArraySize;
 float angle;
 //public List<Vector3> vectorList;
 //public List<Vector3> vectorList2;
@@ -51,24 +52,25 @@ Vector3 rayPos;
 						hit.collider.gameObject.renderer.material.color = Color.red;						
 						// get mesh of object hit by ray 
 						Mesh meshHit = hit.collider.gameObject.GetComponent<MeshFilter>().mesh;	
-						// determine size of vertices array for vertices of mesh
-						vertices = new Vector3[meshHit.vertices.Length];
-						// determine size of vertices array using only vertices that are facing down (i.e. the bottom of the polygon)
-						
+						// determine size of vertices array using only vertices that are facing down (i.e. the bottom of the polygon) using normals
+						normals = meshHit.normals;
+						verticesArraySize = 0;
+						for (int i=0; i<meshHit.normals.Length ; i++)
+							{
+							if (normals[i].z == 1)
+								{
+								verticesArraySize++;
+								}		
+							}						
 						// translate each vertice from local into world space
-						vertices = meshHit.vertices;
-						
-						
-						for (int i=0; i<meshHit.vertices.Length; i++)
+						vertices = meshHit.vertices;						
+						for (int i=0; i<verticesArraySize; i++)
 							{
 							// adjust for scale
 							vertices[i] = new Vector3 (vertices[i].x*hit.collider.gameObject.transform.lossyScale.x, vertices[i].y*hit.collider.gameObject.transform.lossyScale.y,vertices[i].z*hit.collider.gameObject.transform.lossyScale.z);
 							// adjust for world position
 							vertices[i] = hit.collider.gameObject.transform.position - vertices[i];
-							}
-//						Debug.Log(vertices[0].x);
-			
-//						meshHit.GetTriangles
+							}	
 						// assign normals to array
 						normals = meshHit.normals;
 						triangles = meshHit.triangles;
@@ -89,9 +91,23 @@ Vector3 rayPos;
 		
 	{
 	Mesh mesh = meshHolder.GetComponent<MeshFilter>().mesh;
-	mesh.vertices = new Vector3[] {transform.position, vertices[0], vertices[1]};
-	mesh.uv = new Vector2[] {transform.position, vertices[0], vertices[1]};
-	mesh.triangles = new int[] {0, 1, 2};	
+//	mesh.vertices = new Vector3[] {transform.position, vertices[0], vertices[1]};
+//	mesh.uv = new Vector2[] {transform.position, vertices[0], vertices[1]};
+//	mesh.triangles = new int[] {0, 1, 2};	
+		
+	for(int v = 1, t = 1; v < verticesArraySize; v++, t += 3)
+		{			
+			triangles[t] = v;
+			triangles[t + 1] = v + 1;
+		}
+//		vertices[verticesArraySize-1] = new Vector3(0,0,0);
+		vertices[0] = new Vector3(transform.position.x,transform.position.y,0);
+//		vertices[vectorList.Count] = meshHolder.transform.InverseTransformPoint(transform.position);
+//		meshholder.transform.InverseTransformPoint(transform.position)
+		triangles[triangles.Length - 1] = 0;
+		mesh.vertices = vertices;
+//		mesh.uv = uv;		
+		mesh.triangles = triangles;
 		
 	}
 }
