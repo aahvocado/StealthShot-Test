@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
      <Compile Include="Assets\FindFaces.cs" />
+     <Compile Include="Assets\FindFacesOld.cs" />
      <Compile Include="Assets\MouseMove.cs" />
      <Compile Include="Assets\RaycastShadows.cs" />
      <Compile Include="Assets\RaycastShadowsOrig.cs" />

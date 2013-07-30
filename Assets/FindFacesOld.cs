@@ -3,12 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 
-public class FindFaces : MonoBehaviour {
+public class FindFacesOld : MonoBehaviour {
 public GameObject meshHolder;
 GameObject player;
-public GameObject[] polygon;
-GameObject[] walls;	
-int polyNumber;
+GameObject polygon;
 bool lastHit;
 bool meshDrawn;
 int numberOfRays;
@@ -38,9 +36,6 @@ Vector3 rayPos;
 //		vertices = new Vector3[numberOfRays];
 //		mesh = meshHolder.GetComponent<MeshFilter>().mesh;
 //		DrawMesh();	
-		walls = GameObject.FindGameObjectsWithTag("Walls");
-		
-		
 	}	
 
 	void Update ()
@@ -51,23 +46,18 @@ Vector3 rayPos;
 	
 	void DetectObjects()		
 		{	
-//			Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);							
-//			movePos = new Vector3(mousePos.x, mousePos.y, transform.position.z);
-//			// 2nd raycast variable is a direction, so mousepos needs to be changed to a direction for raycast
-//			rayPos = movePos - transform.position;		
-//				if (Physics.Raycast(transform.position, rayPos, out hit))
-//					polyNumber = 0;
-					//verticesArraySize = 0;
-					polygon = new GameObject[walls.Length];					
-			      	for (polyNumber = 0; polyNumber<walls.Length; polyNumber++)
-					{
-					foreach(GameObject wall in walls)		
-						{
+			Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);							
+			movePos = new Vector3(mousePos.x, mousePos.y, transform.position.z);
+			// 2nd raycast variable is a direction, so mousepos needs to be changed to a direction for raycast
+			rayPos = movePos - transform.position;		
+				if (Physics.Raycast(transform.position, rayPos, out hit))
+			      	{		
+						
 						// highlight object being hit
-						polygon[polyNumber] = wall.gameObject;
-						polygon[polyNumber].renderer.material.color = Color.red;						
+						polygon = hit.collider.gameObject;
+						polygon.renderer.material.color = Color.red;						
 						// get mesh of object hit by ray 
-						Mesh meshHit = polygon[polyNumber].GetComponent<MeshFilter>().mesh;	
+						Mesh meshHit = polygon.GetComponent<MeshFilter>().mesh;	
 						// determine size of vertices array using only vertices that are facing down (i.e. the bottom of the polygon) using normals
 						normals = meshHit.normals;
 						verticesArraySize = 0;
@@ -84,9 +74,9 @@ Vector3 rayPos;
 						for (int i=1; i<verticesArraySize+1; i++)
 							{										
 							// adjust for scale
-							vertices[i] = new Vector3 (verticesTemp[i-1].x*polygon[polyNumber].transform.lossyScale.x, verticesTemp[i-1].y*polygon[polyNumber].transform.lossyScale.y,transform.position.z);
+							vertices[i] = new Vector3 (verticesTemp[i-1].x*polygon.transform.lossyScale.x, verticesTemp[i-1].y*polygon.transform.lossyScale.y,transform.position.z);
 							// adjust for world position
-							vertices[i] = polygon[polyNumber].transform.position - vertices[i];
+							vertices[i] = polygon.transform.position - vertices[i];
 							vertices[i].z = transform.position.z;
 							// check to see if it's on the opposite side of the poly, assign the vertcies to player if it is
 							if (Physics.Linecast (vertices[i], transform.position)) 
@@ -103,8 +93,9 @@ Vector3 rayPos;
 //						Debug.Log ("rayPos"+rayPos+"");
 //						Debug.Log ("movePos"+movePos+"");
 //						Debug.DrawLine(transform.position, hit.point);
-						}
 					}
+				
+
 		}
 	
 	void DrawMesh()
