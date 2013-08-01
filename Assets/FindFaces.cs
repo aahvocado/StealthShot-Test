@@ -11,10 +11,10 @@ GameObject[] walls;
 int polyNumber;
 //bool lastHit;
 //bool meshDrawn;
-public int numberOfRays;
+//public int numberOfRays;
 //int vectorPointNumber = 0;
-public int _verticesArraySize;
-public int verticesArraySize;
+int _verticesArraySize;
+int verticesArraySize;
 //float angle;
 //public List<Vector3> vectorList;
 //public List<Vector3> vectorList2;
@@ -31,9 +31,12 @@ public Vector3[] normals;
 public int[] triangles;
 public List <Vector3> verticesList;
 Vector3 verticesDirection;
-//Vector3 verticesNow;
+public List <Vector3> verticesListTemp;
 float verticesAngle;
 public Vector3[] finalVertices;	
+float[] actualAngle;
+public float[] _actualAngle;
+float tempval;
 
 Vector3 movePos;
 Vector3 rayPos;
@@ -41,13 +44,14 @@ Vector3 rayPos;
 	void Start () 
 	{			
 		//assign all shadow casting objects in scene to wall array
-		walls = GameObject.FindGameObjectsWithTag("Walls");		
+		walls = GameObject.FindGameObjectsWithTag("Walls");	
+		DetectObjects();
 		
 	}	
 
 	void Update ()
 		{				
-			DetectObjects();
+		DetectObjects();	
 		}	
 	
 	// establishes vertices of all shadow casting objects in scene, check to see which vertices are visible by player
@@ -91,15 +95,25 @@ Vector3 rayPos;
 							vertices[i] = polygon[polyNumber].transform.position - vertices[i];
 							vertices[i].z = transform.position.z;							
 //							// check to see if it's on the opposite side of the poly, assign the vertcies to player if it is
-							if (Physics.Linecast (vertices[i], transform.position)) 
+							Vector3 rayPos = transform.position;
+							rayPos.z = transform.position.z;
+							if (Physics.Linecast (vertices[i], rayPos)) 
 											{
 											vertices[i] = transform.position;
-											}
+											}				
+//							RaycastHit hit;
+//							Vector3 rayPos = transform.position-vertices[i];
+//							rayPos.z = transform.position.z;
+//							if (Physics.Raycast (vertices[i], rayPos, out hit))
+//											{
+//											vertices[i] = transform.position;
+//											}
+							Debug.DrawLine (vertices[i],rayPos);
 //							vertices[i] = new Vector3 ((transform.position.x + vertices[i].x) * 5, (transform.position.y + vertices[i].y) * 5, vertices[i].z);
 							verticesList.Add (vertices[i]);	
 							
 							}
-						polygon[polyNumber].renderer.material.color = Color.white;
+//						polygon[polyNumber].renderer.material.color = Color.white;
 						triangles = meshHit.triangles;
 						polyNumber++;
 						// add current poly vertex number to total number of vertices
@@ -107,57 +121,115 @@ Vector3 rayPos;
 						
 						}
 					
-						CheckVerticesAngle();		
-						DrawMesh();	
+						AssignVerticesAngles();		
+//						DrawMesh();	
 		}
 	
 	//establish vertices angle in relation to player, sort in clockwise order
-	public void CheckVerticesAngle()
-	{	
+	public void AssignVerticesAngles()
+	{
+	actualAngle = new float[verticesList.Count];	
 	for (int i=0; i<verticesList.Count; i++)
 		{
-		// find angle
-		float actualAngle = 0;
-		verticesDirection = transform.position - verticesList[i];
-		verticesAngle = Vector3.Angle(Vector3.left,verticesDirection);		
-		if(AngleDir(Vector3.left,verticesDirection,Vector3.up)>0F)
+		// find angle of vertices
+		verticesDirection = verticesList[i] - transform.position;
+		verticesAngle = Vector3.Angle(verticesDirection,Vector3.left);		
+		float dirNum = AngleDir(Vector3.left, verticesDirection, Vector3.forward); 		
+			if(dirNum>0F)
 				{
-				actualAngle += verticesAngle;
+				actualAngle[i] += 360F-verticesAngle;				
 				}
 				else
 				{
-				actualAngle += 360F-verticesAngle;
-				}
-//		Debug.Log (i);
-//		Debug.Log(verticesNow);
-//		Debug.Log(actualAngle);	
-		// sort vertices into ascending order
-
-		}		
-		
+				actualAngle[i] += verticesAngle;
+				}			
+		}
+	ArrangeVerticesCW();
+//	DrawMesh();
 	}
-	// variable to calculate 360 degree angles
+	
+	//variable to turn acute 180 degree angles into 360 degree angles
 	private float AngleDir(Vector3 fwd, Vector3 targetDir, Vector3 up) {
 		Vector3 perp = Vector3.Cross(fwd, targetDir);
-		float dir	 = Vector3.Dot(perp, up);
-		if		(dir > 0F)	{ return  1F;}//RIGHT
-		else if	(dir < 0F)	{ return -1F;}//LEFT
-		else				{ return  0F;}
+		float dir = Vector3.Dot(perp, up);		
+		if (dir > 0f) {
+			return 1f;
+		} else if (dir < 0f) {
+			return -1f;
+		} else {
+			return 0f;
+		}
+		
 	}	
 	
-	
-	void DrawMesh()
-		
+	//rearrange vertices into order moving clockwise around player
+	public void ArrangeVerticesCW()
 	{
+	
+	float sortCheckSize = actualAngle.Length;
+//	Debug.Log (actualAngle.Length);
+	int iV = 0;	
+	while (sortCheckSize > 0)
+		{		
+//		Debug.Log ("sortCheck "+sortCheckSize+"");
+		while (actualAngle[iV] == 361)
+			{
+			iV++;
+			}
+		if (actualAngle[iV] != 361)
+			{
+			tempval = actualAngle[iV];	
+			}
+//		Debug.Log("In ");
+//		Debug.Log("iV = "+iV+"");
+//		Debug.Log("In tempval "+tempval+"");
+//		Debug.Log("In angle "+actualAngle[iV]+"");
+		 for (int iN=0; iN<actualAngle.Length;iN++)
+			{
+//			Debug.Log("In 2 ");
+//			Debug.Log("iN = "+iN+"");
+//			Debug.Log("In 2 tempval "+tempval+"");
+//			Debug.Log("In 2 angle "+actualAngle[iN]+"");						
+			if ((tempval< actualAngle[iN]) || (tempval== actualAngle[iN]))
+				{
+					if (iN == actualAngle.Length-1)
+					{
+//					Debug.Log("Out 2 ");
+//					Debug.Log("Out 2 "+tempval+"");
+//					Debug.Log("Out 2 "+actualAngle[iV]+"");
+					verticesListTemp.Add (verticesList[iV]);								
+					sortCheckSize -= 1;
+					actualAngle[iV] = 361;
+					iV = 0;
+					}
+				}
+			if (tempval> actualAngle[iN])
+				{
+//				Debug.Log("Out 1 ");
+//				Debug.Log("Out 1 tempval "+tempval+"");
+//				Debug.Log("Out 1 angle "+actualAngle[iN]+"");
+				iV++;
+//				Debug.Log(iV);
+				iN = actualAngle.Length-1;				
+				}
+			}			
+        }	
+	DrawMesh();
+	}
+	
+	
+	
 	// create mesh for main lightmesh
+	void DrawMesh()		
+	{	
 	Mesh mesh = meshHolder.GetComponent<MeshFilter>().mesh;	
-	finalVertices = new Vector3 [verticesList.Count+1];
+	finalVertices = new Vector3 [verticesListTemp.Count+1];
 	finalVertices[0] = transform.position;
 	// assign triangles	
 	triangles = new int [verticesArraySize*3];	
 	for(int v = 1, t = 1; v < verticesArraySize; v++, t += 3)
 		{			
-			finalVertices[v] = verticesList[v-1];
+			finalVertices[v] = verticesListTemp[v-1];
 			triangles[t] = v;
 			triangles[t + 1] = v + 1;
 		}
@@ -171,6 +243,7 @@ Vector3 rayPos;
 //		mesh.uv = vertices;		
 		mesh.triangles = triangles;
 		verticesList.Clear ();
+		verticesListTemp.Clear();
 //		finalVertices = mesh.vertices;
 		
 	}
