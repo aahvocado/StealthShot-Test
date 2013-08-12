@@ -5,9 +5,10 @@ using System.Collections.Generic;
 
 public class FindFaces : MonoBehaviour {
 public GameObject meshHolder;
-//GameObject player;
+public GameObject marker;
 public GameObject[] polygon;
 GameObject[] walls;	
+GameObject[] _marker;
 int polyNumber;
 //bool lastHit;
 //bool meshDrawn;
@@ -94,33 +95,36 @@ Vector3 rayPos;
 							// adjust for world position
 							vertices[i] = polygon[polyNumber].transform.position - vertices[i];
 							vertices[i].z = transform.position.z;							
-//							// check to see if it's on the opposite side of the poly, assign the vertcies to player if it is
+//							// check to see if it's on the opposite side of the poly, assign the vertices to player if it is
 							Vector3 rayPos = transform.position;
-							rayPos.z = transform.position.z;
-							if (Physics.Linecast (vertices[i], rayPos)) 
+							RaycastHit hit;	
+							if (Physics.Linecast (rayPos, vertices[i], out hit)) 
 											{
 											vertices[i] = transform.position;
-											}				
-//							RaycastHit hit;
+//											Instantiate (marker, hit.point, Quaternion.identity);
+//											vertices[i] = vertices[i-1];
+											}	
 //							Vector3 rayPos = transform.position-vertices[i];
 //							rayPos.z = transform.position.z;
-//							if (Physics.Raycast (vertices[i], rayPos, out hit))
+//							if (Physics.Raycast (rayPos, vertices[i], out hit))
 //											{
 //											vertices[i] = transform.position;
 //											}
-							Debug.DrawLine (vertices[i],rayPos);
+							Debug.DrawLine (vertices[i],rayPos,Color.green);
 //							vertices[i] = new Vector3 ((transform.position.x + vertices[i].x) * 5, (transform.position.y + vertices[i].y) * 5, vertices[i].z);
-							verticesList.Add (vertices[i]);	
+//							if (vertices[i] != transform.position)
+//								{
+								verticesList.Add (vertices[i]);	
+//								}
 							
 							}
 //						polygon[polyNumber].renderer.material.color = Color.white;
 						triangles = meshHit.triangles;
 						polyNumber++;
-						// add current poly vertex number to total number of vertices
-						verticesArraySize = verticesArraySize + _verticesArraySize;
-						
+						// add current poly vertex number to total number of vertices						
+							verticesArraySize = verticesArraySize + _verticesArraySize;					
 						}
-					
+//						_marker = GameObject.FindGameObjectsWithTag("Walls");						
 						AssignVerticesAngles();		
 //						DrawMesh();	
 		}
@@ -145,7 +149,6 @@ Vector3 rayPos;
 				}			
 		}
 	ArrangeVerticesCW();
-//	DrawMesh();
 	}
 	
 	//variable to turn acute 180 degree angles into 360 degree angles
