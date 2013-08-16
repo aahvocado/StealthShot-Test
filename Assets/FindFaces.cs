@@ -15,7 +15,7 @@ int polyNumber;
 //public int numberOfRays;
 //int vectorPointNumber = 0;
 int _verticesArraySize;
-int verticesArraySize;
+public int verticesArraySize;
 //float angle;
 //public List<Vector3> vectorList;
 //public List<Vector3> vectorList2;
@@ -46,7 +46,7 @@ Vector3 rayPos;
 	{			
 		//assign all shadow casting objects in scene to wall array
 		walls = GameObject.FindGameObjectsWithTag("Walls");	
-		DetectObjects();
+//		DetectObjects();
 		
 	}	
 
@@ -98,23 +98,24 @@ Vector3 rayPos;
 //							// check to see if it's on the opposite side of the poly, assign the vertices to player if it is
 							Vector3 rayPos = transform.position;
 							RaycastHit hit;	
-							if (Physics.Linecast (rayPos, vertices[i], out hit)) 
+							if (!Physics.Linecast (rayPos, vertices[i], out hit)) 
 											{
-											vertices[i] = transform.position;
+//											vertices[i] = transform.position;
 //											Instantiate (marker, hit.point, Quaternion.identity);
 //											vertices[i] = vertices[i-1];
+											verticesList.Add (vertices[i]);
+											Debug.DrawLine (vertices[i],rayPos,Color.green);
 											}	
 //							Vector3 rayPos = transform.position-vertices[i];
 //							rayPos.z = transform.position.z;
 //							if (Physics.Raycast (rayPos, vertices[i], out hit))
 //											{
 //											vertices[i] = transform.position;
-//											}
-							Debug.DrawLine (vertices[i],rayPos,Color.green);
+//											}							
 //							vertices[i] = new Vector3 ((transform.position.x + vertices[i].x) * 5, (transform.position.y + vertices[i].y) * 5, vertices[i].z);
 //							if (vertices[i] != transform.position)
 //								{
-								verticesList.Add (vertices[i]);	
+//									verticesList.Add (vertices[i]);	
 //								}
 							
 							}
@@ -122,7 +123,8 @@ Vector3 rayPos;
 						triangles = meshHit.triangles;
 						polyNumber++;
 						// add current poly vertex number to total number of vertices						
-							verticesArraySize = verticesArraySize + _verticesArraySize;					
+//							verticesArraySize = verticesArraySize + _verticesArraySize;
+							verticesArraySize = verticesArraySize + verticesList.Count;
 						}
 //						_marker = GameObject.FindGameObjectsWithTag("Walls");						
 						AssignVerticesAngles();		
@@ -151,19 +153,19 @@ Vector3 rayPos;
 	ArrangeVerticesCW();
 	}
 	
-	//variable to turn acute 180 degree angles into 360 degree angles
-	private float AngleDir(Vector3 fwd, Vector3 targetDir, Vector3 up) {
-		Vector3 perp = Vector3.Cross(fwd, targetDir);
-		float dir = Vector3.Dot(perp, up);		
-		if (dir > 0f) {
-			return 1f;
-		} else if (dir < 0f) {
-			return -1f;
-		} else {
-			return 0f;
-		}
-		
-	}	
+		//variable to turn acute 180 degree angles into 360 degree angles
+		private float AngleDir(Vector3 fwd, Vector3 targetDir, Vector3 up) {
+			Vector3 perp = Vector3.Cross(fwd, targetDir);
+			float dir = Vector3.Dot(perp, up);		
+			if (dir > 0f) {
+				return 1f;
+			} else if (dir < 0f) {
+				return -1f;
+			} else {
+				return 0f;
+			}
+			
+		}	
 	
 	//rearrange vertices into order moving clockwise around player
 	public void ArrangeVerticesCW()
@@ -229,13 +231,15 @@ Vector3 rayPos;
 	finalVertices = new Vector3 [verticesListTemp.Count+1];
 	finalVertices[0] = transform.position;
 	// assign triangles	
-	triangles = new int [verticesArraySize*3];	
-	for(int v = 1, t = 1; v < verticesArraySize; v++, t += 3)
+	triangles = new int [verticesListTemp.Count*3];	
+	for(int v = 1, t = 1; v < verticesListTemp.Count+1; v++, t += 3)
 		{			
-			finalVertices[v] = verticesListTemp[v-1];
+			Debug.Log(v);
+			finalVertices[v-1] = verticesListTemp[v-1];
 			triangles[t] = v;
 			triangles[t + 1] = v + 1;
 		}
+		triangles[triangles.Length-1] = 1;		
 //		vertices[verticesArraySize-1] = new Vector3(0,0,0);
 //		vertices[0] = new Vector3(transform.position.x,transform.position.y,0);
 		finalVertices[verticesList.Count] = transform.position;
@@ -244,9 +248,9 @@ Vector3 rayPos;
 //		triangles[triangles.Length - 1] = 0;
 		mesh.vertices = finalVertices;
 //		mesh.uv = vertices;		
-		mesh.triangles = triangles;
+		mesh.triangles = triangles;		
 		verticesList.Clear ();
-		verticesListTemp.Clear();
+		verticesListTemp.Clear();		
 //		finalVertices = mesh.vertices;
 		
 	}
