@@ -50,6 +50,8 @@
      <Compile Include="Assets\RaycastShadows.cs" />
      <Compile Include="Assets\RaycastShadowsOrig.cs" />
      <Compile Include="Assets\Resources\Scripts\GeometricVisibility.cs" />
+     <Compile Include="Assets\Resources\Scripts\OLDScripts\GeometricVisibilityOLD.cs" />
+     <Compile Include="Assets\Resources\Scripts\OLDScripts\VisibilityOLD.cs" />
      <Compile Include="Assets\Resources\Scripts\VisibilityFader.cs" />
      <None Include="Assets\ShadowShader.shader" />
   </ItemGroup>
