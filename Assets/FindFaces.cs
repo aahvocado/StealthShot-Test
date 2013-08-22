@@ -7,7 +7,7 @@ public class FindFaces : MonoBehaviour {
 public GameObject meshHolder;
 public GameObject marker;
 public GameObject[] polygon;
-public Vector3[] polygonPos;
+//public Vector3[] polygonPos;
 public float Shadowlength;
 GameObject[] walls;	
 GameObject[] _marker;
@@ -37,7 +37,7 @@ public List <GameObject> polygonNumber;
 public List <Vector3> verticesList;
 public List <Vector3> _verticesList;
 public List <Vector3> verticesAngles;
-public List
+public List <Vector3> verticesByNormals;
 Vector3 verticesDirection;
 public List <Vector3> verticesListTemp;
 float verticesAngle;
@@ -54,7 +54,7 @@ Vector3 rayPos;
 	{			
 		//assign all shadow casting objects in scene to wall array
 		walls = GameObject.FindGameObjectsWithTag("Walls");	
-//		DetectObjectVertices();
+
 		ScanForObjects();
 		DetectObjectVertices();	
 		
@@ -71,88 +71,108 @@ Vector3 rayPos;
 	// finds objects in scene, arranges into CW order from 9'Oclock
 	public void ScanForObjects()	
 	{
-					// initiate array to include all polygons tagged 'wall'
-					getPolys = true;
-					polygon = new GameObject[walls.Length];
-					polygonPos = new Vector3[walls.Length];
-					polyNumber = 0;
-					polyTransform.Clear ();
-					foreach(GameObject wall in walls)
-						{
-						polygon[polyNumber] = wall.gameObject;
-						// find lowest angle vertices
-						Mesh polyMesh = polygon[polyNumber].GetComponent<MeshFilter>().mesh;
-//						AssignVerticesAngles
-						polyTransform.Add (polygon[polyNumber].transform.position);
-						polyNumber++;
-						}
-					AssignVerticesAngles(polyTransform);
-					getPolys = false;
-					// re-assigning polys in CW order
-					for (int iG = 0; iG< walls.Length; iG++)
-					{
-					polygon[iG] = polygonNumber[iG];
+		// initiate array to include all polygons tagged 'wall'					
+		polygon = new GameObject[walls.Length];
+//					polygonPos = new Vector3[walls.Length];
+		polyNumber = 0;
+		polyTransform.Clear ();
+		foreach(GameObject wall in walls)
+			{
+			polygon[polyNumber] = wall.gameObject;
+			// find lowest angle vertices
+			Mesh polyMesh = polygon[polyNumber].GetComponent<MeshFilter>().mesh;
+			normals = polyMesh.normals;
+			verticesTemp = polyMesh.vertices;						
+			for (int i=0; i<polyMesh.normals.Length ; i++)
+				{
+				if (normals[i].z == 1)
+					{								
+					// adjust vertices for scale of poly
+					verticesTemp[i] = new Vector3 (verticesTemp[i].x*polygon[polyNumber].transform.lossyScale.x, verticesTemp[i].y*polygon[polyNumber].transform.lossyScale.y,transform.position.z);
+					// adjust for world position
+					verticesTemp[i] = polygon[polyNumber].transform.position - verticesTemp[i];
+					verticesTemp[i].z = transform.position.z;
+					verticesByNormals.Add(verticesTemp[i]);
 					}		
+				}
+			getPolys = false;
+			// feed all vertices into angle comparison function
+			AssignVerticesAngles(verticesByNormals);
+			// use the lowest angle as point of reference for poly
+			polyTransform.Add (verticesListTemp[0]);
+			verticesListTemp.Clear();
+			verticesByNormals.Clear ();
+			polyNumber++;
+			}
+		getPolys = true;
+		AssignVerticesAngles(polyTransform);
+		getPolys = false;
+		// re-assigning polys in CW order
+		for (int iG = 0; iG< walls.Length; iG++)
+		{
+		polygon[iG] = polygonNumber[iG];
+		}		
 	
 	}
 	
 	// establishes vertices of all shadow casting objects in scene, check to see which vertices are visible by player
 	public void DetectObjectVertices()				
 	{			
-					// number of useful vertices in scene
-					verticesArraySize = 0;
-					
-					// cycle through walls, harvesting useful vertices					
-					for (int _polyNumber = 0; _polyNumber<walls.Length; _polyNumber++)
-						{						
-						// highlight polygon being examined in red
+		// number of useful vertices in scene
+		verticesArraySize = 0;
+		
+		// cycle through walls, harvesting useful vertices					
+		for (int _polyNumber = 0; _polyNumber<walls.Length; _polyNumber++)
+			{						
+			// highlight polygon being examined in red
 //						polygon[polyNumber] = wall.gameObject;
-						polygon[_polyNumber].renderer.material.color = Color.red;						
-						// get mesh of current polygon
-						Mesh meshHit = polygon[_polyNumber].GetComponent<MeshFilter>().mesh;	
-						// determine size of vertices array by defining how many vertices are facing down (i.e. the bottom of the polygon) using normals
-						normals = meshHit.normals;
-						verticesTemp = meshHit.vertices;
-						_verticesArraySize = 0;
-						for (int i=0; i<meshHit.normals.Length ; i++)
-							{
-							if (normals[i].z == 1)
+			polygon[_polyNumber].renderer.material.color = Color.red;						
+			// get mesh of current polygon
+			Mesh meshHit = polygon[_polyNumber].GetComponent<MeshFilter>().mesh;	
+			// determine size of vertices array by defining how many vertices are facing down (i.e. the bottom of the polygon) using normals
+			normals = meshHit.normals;
+			verticesTemp = meshHit.vertices;						
+			for (int i=0; i<meshHit.normals.Length ; i++)
+				{
+				if (normals[i].z == 1)
+					{
+					verticesByNormals.Add(verticesTemp[i]);
+					}		
+				}						
+									
+			verticesTemp = verticesByNormals.ToArray();						
+			// assign size of vertices array, +1 to include player position
+			vertices = new Vector3[verticesByNormals.Count+1];
+			for (int i=1; i<verticesByNormals.Count+1; i++)
+				{							
+				// adjust vertices for scale of poly
+				vertices[i] = new Vector3 (verticesTemp[i-1].x*polygon[_polyNumber].transform.lossyScale.x, verticesTemp[i-1].y*polygon[_polyNumber].transform.lossyScale.y,transform.position.z);
+				// adjust for world position
+				vertices[i] = polygon[_polyNumber].transform.position - vertices[i];
+				vertices[i].z = transform.position.z;							
+//							// check to see if it's on the opposite side of the poly to the player, leave the vertices if it is, add if it isn't
+				Vector3 rayPos = transform.position;
+				RaycastHit hit;	
+				if (!Physics.Linecast (rayPos, vertices[i], out hit)) 
 								{
-								verticesByNormals.Add
-								_verticesArraySize++;
-								}		
-							}						
-						// translate each vertice from local into world space						
-						verticesTemp = meshHit.vertices;
-						// assign size of vertices array, +1 to include player position
-						vertices = new Vector3[_verticesArraySize+1];
-						for (int i=1; i<_verticesArraySize+1; i++)
-							{							
-							// adjust for scale
-							vertices[i] = new Vector3 (verticesTemp[i-1].x*polygon[_polyNumber].transform.lossyScale.x, verticesTemp[i-1].y*polygon[_polyNumber].transform.lossyScale.y,transform.position.z);
-							// adjust for world position
-							vertices[i] = polygon[_polyNumber].transform.position - vertices[i];
-							vertices[i].z = transform.position.z;							
-//							// check to see if it's on the opposite side of the poly to the player, leave the vertices if it is
-							Vector3 rayPos = transform.position;
-							RaycastHit hit;	
-							if (!Physics.Linecast (rayPos, vertices[i], out hit)) 
-											{
-//											verticesList.Add (vertices[i]);
-											_verticesList.Add (vertices[i]);
-											Debug.DrawLine (vertices[i],rayPos,Color.green);											
-											}							
-							}
-						
+								_verticesList.Add (vertices[i]);
+								Debug.DrawLine (vertices[i],rayPos,Color.green);											
+								}							
+				}						
 //						Debug.Log (_verticesList.Count);
-						AssignVerticesAngles(_verticesList);						
-						AddVerticesToList();
-						_verticesList.Clear();
-						}
+			AssignVerticesAngles(_verticesList);						
+			AddVerticesToList();
+			_verticesList.Clear();
+			verticesByNormals.Clear();
+			}
 //						_marker = GameObject.FindGameObjectsWithTag("Walls");						
 //						AssignVerticesAngles(verticesList);	
 //						Debug.Log("hi");
-						DrawMesh();	
+		
+			AssignVerticesAngles(verticesList);			
+//			verticesList = verticesListTemp;
+			
+			DrawMesh();	
 		}
 	
 	//establish vertices angle in relation to player, sort in clockwise order
@@ -239,7 +259,7 @@ Vector3 rayPos;
 	//(playerPos + surfacePos) * desiredShadowLength
 	// extrude vertices of lit edges of poly (if it's visible), add both original and extruded value to vector list
 	public void AddVerticesToList()
-		{
+	{
 		
 		if (_verticesList.Count>0)
 		{
@@ -305,7 +325,8 @@ Vector3 rayPos;
 		mesh.vertices = finalVertices;
 	
 		mesh.triangles = triangles;		
-		verticesList.Clear ();		
+		verticesList.Clear ();
+		verticesListTemp.Clear();
 
 		
 	}
