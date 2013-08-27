@@ -63,17 +63,16 @@ Vector3 rayPos;
 	void Update ()
 		{
 		//assign all shadow casting objects in scene to wall array
-		walls = GameObject.FindGameObjectsWithTag("Walls");
-		ScanForObjects();
+//		walls = GameObject.FindGameObjectsWithTag("Walls");
+//		ScanForObjects();
 		DetectObjectVertices();	
 		}
 	
-	// finds objects in scene, arranges into CW order from 9'Oclock
-	public void ScanForObjects()	
+	
+	public void ScanForObjects()						// finds objects in scene, arranges into CW order
 	{
 		// initiate array to include all polygons tagged 'wall'					
 		polygon = new GameObject[walls.Length];
-//					polygonPos = new Vector3[walls.Length];
 		polyNumber = 0;
 		polyTransform.Clear ();
 		foreach(GameObject wall in walls)
@@ -96,36 +95,33 @@ Vector3 rayPos;
 					}		
 				}
 			getPolys = false;
-			// feed all vertices into angle comparison function
-			AssignVerticesAngles(verticesByNormals);
-			// use the lowest angle as point of reference for poly
-			polyTransform.Add (verticesListTemp[0]);
+			
+			CompareVerticesAngles(verticesByNormals);				// feed all vertices into angle comparison function
+			
+			polyTransform.Add (verticesListTemp[0]);				// assign the lowest angle as point of reference for poly
 			verticesListTemp.Clear();
 			verticesByNormals.Clear ();
 			polyNumber++;
 			}
 		getPolys = true;
-		AssignVerticesAngles(polyTransform);
-		getPolys = false;
-		// re-assigning polys in CW order
-		for (int iG = 0; iG< walls.Length; iG++)
+		CompareVerticesAngles(polyTransform);
+		getPolys = false;		
+		for (int iG = 0; iG< walls.Length; iG++) 					// re-assigning polys in CW order
 		{
 		polygon[iG] = polygonNumber[iG];
 		}		
 	
 	}
 	
-	// establishes vertices of all shadow casting objects in scene, check to see which vertices are visible by player
-	public void DetectObjectVertices()				
+	
+	public void DetectObjectVertices()					// establishes vertices of all shadow casting objects in scene, check to see which vertices are visible by player		
 	{			
 		// number of useful vertices in scene
 		verticesArraySize = 0;
-		
 		// cycle through walls, harvesting useful vertices					
 		for (int _polyNumber = 0; _polyNumber<walls.Length; _polyNumber++)
 			{						
 			// highlight polygon being examined in red
-//						polygon[polyNumber] = wall.gameObject;
 			polygon[_polyNumber].renderer.material.color = Color.red;						
 			// get mesh of current polygon
 			Mesh meshHit = polygon[_polyNumber].GetComponent<MeshFilter>().mesh;	
@@ -150,7 +146,7 @@ Vector3 rayPos;
 				// adjust for world position
 				vertices[i] = polygon[_polyNumber].transform.position - vertices[i];
 				vertices[i].z = transform.position.z;							
-//							// check to see if it's on the opposite side of the poly to the player, leave the vertices if it is, add if it isn't
+//				// check to see if it's on the opposite side of the poly to the player, leave the vertices if it is, add if it isn't
 				Vector3 rayPos = transform.position;
 				RaycastHit hit;	
 				if (!Physics.Linecast (rayPos, vertices[i], out hit)) 
@@ -159,26 +155,47 @@ Vector3 rayPos;
 								Debug.DrawLine (vertices[i],rayPos,Color.green);											
 								}							
 				}						
-//						Debug.Log (_verticesList.Count);
-			AssignVerticesAngles(_verticesList);						
-			AddVerticesToList();
-			_verticesList.Clear();
-			verticesByNormals.Clear();
+
+				CompareVerticesAngles(_verticesList);	// arrange polygon's vertices into CW order
+				AddVerticesToList(); 					// add to global vertices list
+				_verticesList.Clear(); 					
+				verticesByNormals.Clear();
 			}
-//						_marker = GameObject.FindGameObjectsWithTag("Walls");						
-//						AssignVerticesAngles(verticesList);	
-//						Debug.Log("hi");
-		
-			AssignVerticesAngles(verticesList);			
-//			verticesList = verticesListTemp;
+			
+			AddBoundaryPoints(); 						// add the perimeter points	
+			CompareVerticesAngles(verticesList);			// arrange global vertices list into CW order		
+			verticesList.Clear ();
+//			Debug.Log(""+verticesList.Count+" 174");
+			for (int iP = 0; iP<verticesListTemp.Count; iP++)
+			{
+			verticesList.Add (verticesListTemp[iP]);			
+			}			
 			
 			DrawMesh();	
 		}
 	
-	//establish vertices angle in relation to player, sort in clockwise order
-	public void AssignVerticesAngles(List<Vector3> verticesAngles)
+	public void AddBoundaryPoints()						// add perimeter points if visible
 	{
+		Vector3[] boundaryPoint = new Vector3[4];
+		boundaryPoint [0] = new Vector3 (-300,200, transform.position.z);
+		boundaryPoint [1] = new Vector3 (300,200, transform.position.z);
+		boundaryPoint [2] = new Vector3 (300,-200, transform.position.z);
+		boundaryPoint [3] = new Vector3 (-300,-200, transform.position.z);
+		RaycastHit hit;	
+		for (int iBP = 0; iBP< boundaryPoint.Length; iBP++)
+			{
+			if (!Physics.Linecast (transform.position, boundaryPoint[iBP], out hit)) 
+							{
+							verticesList.Add (boundaryPoint[iBP]);
+							Debug.DrawLine (boundaryPoint[iBP],transform.position,Color.blue);											
+							}	
+			}
+	}	
 	
+	
+	public void CompareVerticesAngles(List<Vector3> verticesAngles)			//establish vertices angle in relation to player, sort in clockwise order
+	{
+	// -part 1: assign angles
 	actualAngle = new float[verticesAngles.Count];	
 	for (int i=0; i<verticesAngles.Count; i++)
 		{
@@ -195,8 +212,8 @@ Vector3 rayPos;
 				actualAngle[i] += verticesAngle;
 				}			
 		}		
-	//rearrange vertices into order moving clockwise around player	
-	float sortCheckSize = actualAngle.Length;
+	// -part 2: compare to other angles
+	float sortCheckSize = actualAngle.Length; 
 	int iV = 0;	
 	while (sortCheckSize > 0)
 		{	
@@ -213,17 +230,13 @@ Vector3 rayPos;
 			if ((tempval< actualAngle[iN]) || (tempval== actualAngle[iN]))
 				{
 					if (iN == actualAngle.Length-1)
-					{
-					// when function is being used for defining vertices
-					if (getPolys== false)
+					{					
+					if (getPolys== false)				// when function is being used for defining vertices
 						{
-//						Debug.Log("hi hi");
-						verticesListTemp.Add (verticesAngles[iV]);
+						verticesListTemp.Add (verticesAngles[iV]); 			// if angle is smallest, add corresponding vertex to global list
 						}
-					else
-					// when function is being used for defining polys
+					else 								// when function is being used for defining polys
 						{
-//						Debug.Log("hi ho");
 						polygonNumber.Add (polygon[iV]);
 						}
 					sortCheckSize -= 1;
@@ -238,6 +251,77 @@ Vector3 rayPos;
 				}
 			}			
         }
+		
+	}
+	
+	
+	
+	
+	//(playerPos + surfacePos) * desiredShadowLength
+	// extrude vertices of lit edges of poly (if it's visible), add both original and extruded value to vector list
+	public void AddVerticesToList() 					// adding vertices of poly to global vertices list 
+	{		
+		if (verticesListTemp.Count>0)
+		{
+		Vector3 _verticesListTemp = verticesListTemp[0]; //assigning first CW vertex of poly to temp value
+		RaycastHit hit;
+		if (Physics.Raycast(verticesListTemp[0], (verticesListTemp[0]- transform.position), out hit)) 			// raycasting to wall behind poly, if a hit, use that point...
+			{
+            verticesListTemp[0] = hit.point;
+			Vector3 _vertNudge = verticesListTemp[0];
+			_vertNudge.x = _vertNudge.x -1;
+			verticesListTemp[0] = _vertNudge;
+			Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.red);
+			}
+		else
+			{
+			verticesListTemp[0] = verticesListTemp[0]+((verticesListTemp[0]- transform.position)*Shadowlength); // if not, extrude arbitrary distance (Shadowlength)
+			Vector3 _vertNudge = verticesListTemp[0];
+			_vertNudge.x = _vertNudge.x -1;
+			verticesListTemp[0] = _vertNudge;
+			Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.red);
+			}
+		verticesList.Add(verticesListTemp[0]);			// add extruded poly vertex
+		verticesList.Add(_verticesListTemp);			// add actual vertex of poly
+			
+		_verticesListTemp = verticesListTemp[verticesListTemp.Count-1]; // same but with last CW vertex of poly
+		if (Physics.Raycast(verticesListTemp[verticesListTemp.Count-1], (verticesListTemp[verticesListTemp.Count-1]- transform.position), out hit))
+			{
+            verticesListTemp[verticesListTemp.Count-1] = hit.point;
+			Vector3 _vertNudge = verticesListTemp[verticesListTemp.Count-1];
+			_vertNudge.x = _vertNudge.x +1;
+			verticesListTemp[0] = _vertNudge;
+			Debug.DrawLine (_verticesListTemp,verticesListTemp[verticesListTemp.Count-1],Color.red);
+			}
+		else
+			{
+			verticesListTemp[verticesListTemp.Count-1] = verticesListTemp[verticesListTemp.Count-1]+ ((verticesListTemp[verticesListTemp.Count-1]- transform.position)*Shadowlength);
+			Vector3 _vertNudge = verticesListTemp[verticesListTemp.Count-1];
+			_vertNudge.x = _vertNudge.x +1;
+			verticesListTemp[verticesListTemp.Count-1] = _vertNudge;
+			Debug.DrawLine (_verticesListTemp,verticesListTemp[verticesListTemp.Count-1],Color.red);
+			}
+		verticesList.Add(_verticesListTemp);
+		verticesList.Add(verticesListTemp[verticesListTemp.Count-1]);	
+		}
+		verticesListTemp.Clear();
+		verticesAngles.Clear ();
+		
+	}	
+	
+	public void FindVertexAngle()			// used to find angle of single vertices
+	{
+		verticesDirection = verticesAngles[i] - transform.position;
+		verticesAngle = Vector3.Angle(verticesDirection,Vector3.up);		
+		float dirNum = AngleDir(Vector3.up, verticesDirection, Vector3.forward); 		
+			if(dirNum>0F)
+				{
+				actualAngle[i] += 360F-verticesAngle;				
+				}
+				else
+				{
+				actualAngle[i] += verticesAngle;
+				}
 		
 	}
 	
@@ -256,61 +340,17 @@ Vector3 rayPos;
 		}	
 	
 	
-	//(playerPos + surfacePos) * desiredShadowLength
-	// extrude vertices of lit edges of poly (if it's visible), add both original and extruded value to vector list
-	public void AddVerticesToList()
-	{
-		
-		if (_verticesList.Count>0)
-		{
-//		Debug.Log("hi ho ho");
-		Vector3 _verticesListTemp = verticesListTemp[0]; //original
-		RaycastHit hit;
-		if (Physics.Raycast(verticesListTemp[0], (verticesListTemp[0]- transform.position), out hit))
-			{
-            verticesListTemp[0] = hit.point;
-			Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.red);
-			}
-		else
-			{
-			verticesListTemp[0] = verticesListTemp[0]+((verticesListTemp[0]- transform.position)*Shadowlength); // extruded
-			Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.red);
-			}
-		verticesList.Add(verticesListTemp[0]);
-		verticesList.Add(_verticesListTemp);
-		_verticesListTemp = verticesListTemp[verticesListTemp.Count-1];
-		if (Physics.Raycast(verticesListTemp[verticesListTemp.Count-1], (verticesListTemp[verticesListTemp.Count-1]- transform.position), out hit))
-			{
-            verticesListTemp[verticesListTemp.Count-1] = hit.point;
-			Debug.DrawLine (_verticesListTemp,verticesListTemp[verticesListTemp.Count-1],Color.red);
-			}
-		else
-			{
-			verticesListTemp[verticesListTemp.Count-1] = verticesListTemp[verticesListTemp.Count-1]+ ((verticesListTemp[verticesListTemp.Count-1]- transform.position)*Shadowlength);
-			Debug.DrawLine (_verticesListTemp,verticesListTemp[verticesListTemp.Count-1],Color.red);
-			}
-		verticesList.Add(_verticesListTemp);
-		verticesList.Add(verticesListTemp[verticesListTemp.Count-1]);
-		// check incase last vertices has swapped with third	
-			
 	
-		}
-		verticesListTemp.Clear();
-		verticesAngles.Clear ();
-		
-	}	
-	
-	
-	// create mesh for main lightmesh
-	void DrawMesh()		
+	void DrawMesh()		// create mesh for main lightmesh
 	{	
-	Mesh mesh = meshHolder.GetComponent<MeshFilter>().mesh;	
+	Mesh mesh = meshHolder.GetComponent<MeshFilter>().mesh;
+//	Debug.Log(""+verticesList.Count+" 309");
 	finalVertices = new Vector3 [verticesList.Count+1];	
 	// assign triangles	
 	triangles = new int [verticesList.Count*3];	
 	for(int v = 1, t = 1; v < verticesList.Count+1; v++, t += 3)
 		{				
-			finalVertices[v-1] = verticesList[v-1];
+			finalVertices[v] = verticesList[v-1];
 			// make sure lightmesh is flat
 			Vector3 tempvert = finalVertices[v-1];
 			tempvert.z = transform.position.z;
@@ -320,10 +360,10 @@ Vector3 rayPos;
 		}
 		triangles[triangles.Length-1] = 1;		
 		
-		finalVertices[verticesList.Count] = finalVertices[0];
+//		finalVertices[verticesList.Count] = finalVertices[0];
 		finalVertices[0] = transform.position;		
 		mesh.vertices = finalVertices;
-	
+//		Debug.Log(""+verticesList.Count+" 329");
 		mesh.triangles = triangles;		
 		verticesList.Clear ();
 		verticesListTemp.Clear();
