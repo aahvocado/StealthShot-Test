@@ -10,7 +10,7 @@ public GameObject[] polygon;
 //public Vector3[] polygonPos;
 public float Shadowlength;
 GameObject[] walls;	
-GameObject[] _marker;
+public float[] testArray;
 int polyNumber;
 //bool lastHit;
 //bool meshDrawn;
@@ -39,6 +39,7 @@ public List <Vector3> _verticesList;
 public List <Vector3> verticesAngles;
 public List <Vector3> verticesByNormals;
 Vector3 verticesDirection;
+float vertexAngle;
 public List <Vector3> verticesListTemp;
 float verticesAngle;
 public Vector3[] finalVertices;	
@@ -199,21 +200,17 @@ Vector3 rayPos;
 	actualAngle = new float[verticesAngles.Count];	
 	for (int i=0; i<verticesAngles.Count; i++)
 		{
-		// find angle of vertices
-		verticesDirection = verticesAngles[i] - transform.position;
-		verticesAngle = Vector3.Angle(verticesDirection,Vector3.up);		
-		float dirNum = AngleDir(Vector3.up, verticesDirection, Vector3.forward); 		
-			if(dirNum>0F)
-				{
-				actualAngle[i] += 360F-verticesAngle;				
-				}
-				else
-				{
-				actualAngle[i] += verticesAngle;
-				}			
+		FindVertexAngle(verticesAngles[i]);
+//		Debug.Log(vertexAngle);
+		actualAngle[i] = vertexAngle;				
 		}		
 	// -part 2: compare to other angles
-	float sortCheckSize = actualAngle.Length; 
+	float sortCheckSize = actualAngle.Length;
+//	testArray = new float[actualAngle.Length];
+//	for (int iP = 0; iP<actualAngle.Length; iP++)
+//			{
+//			testArray[iP] = actualAngle[iP];			
+//			}	
 	int iV = 0;	
 	while (sortCheckSize > 0)
 		{	
@@ -254,79 +251,25 @@ Vector3 rayPos;
 		
 	}
 	
-	
-	
-	
-	//(playerPos + surfacePos) * desiredShadowLength
-	// extrude vertices of lit edges of poly (if it's visible), add both original and extruded value to vector list
-	public void AddVerticesToList() 					// adding vertices of poly to global vertices list 
+	public void FindVertexAngle (Vector3 vertexCoord)					// used to find angle of single vertex
 	{		
-		if (verticesListTemp.Count>0)
-		{
-		Vector3 _verticesListTemp = verticesListTemp[0]; //assigning first CW vertex of poly to temp value
-		RaycastHit hit;
-		if (Physics.Raycast(verticesListTemp[0], (verticesListTemp[0]- transform.position), out hit)) 			// raycasting to wall behind poly, if a hit, use that point...
-			{
-            verticesListTemp[0] = hit.point;
-			Vector3 _vertNudge = verticesListTemp[0];
-			_vertNudge.x = _vertNudge.x -1;
-			verticesListTemp[0] = _vertNudge;
-			Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.red);
-			}
-		else
-			{
-			verticesListTemp[0] = verticesListTemp[0]+((verticesListTemp[0]- transform.position)*Shadowlength); // if not, extrude arbitrary distance (Shadowlength)
-			Vector3 _vertNudge = verticesListTemp[0];
-			_vertNudge.x = _vertNudge.x -1;
-			verticesListTemp[0] = _vertNudge;
-			Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.red);
-			}
-		verticesList.Add(verticesListTemp[0]);			// add extruded poly vertex
-		verticesList.Add(_verticesListTemp);			// add actual vertex of poly
-			
-		_verticesListTemp = verticesListTemp[verticesListTemp.Count-1]; // same but with last CW vertex of poly
-		if (Physics.Raycast(verticesListTemp[verticesListTemp.Count-1], (verticesListTemp[verticesListTemp.Count-1]- transform.position), out hit))
-			{
-            verticesListTemp[verticesListTemp.Count-1] = hit.point;
-			Vector3 _vertNudge = verticesListTemp[verticesListTemp.Count-1];
-			_vertNudge.x = _vertNudge.x +1;
-			verticesListTemp[0] = _vertNudge;
-			Debug.DrawLine (_verticesListTemp,verticesListTemp[verticesListTemp.Count-1],Color.red);
-			}
-		else
-			{
-			verticesListTemp[verticesListTemp.Count-1] = verticesListTemp[verticesListTemp.Count-1]+ ((verticesListTemp[verticesListTemp.Count-1]- transform.position)*Shadowlength);
-			Vector3 _vertNudge = verticesListTemp[verticesListTemp.Count-1];
-			_vertNudge.x = _vertNudge.x +1;
-			verticesListTemp[verticesListTemp.Count-1] = _vertNudge;
-			Debug.DrawLine (_verticesListTemp,verticesListTemp[verticesListTemp.Count-1],Color.red);
-			}
-		verticesList.Add(_verticesListTemp);
-		verticesList.Add(verticesListTemp[verticesListTemp.Count-1]);	
-		}
-		verticesListTemp.Clear();
-		verticesAngles.Clear ();
-		
-	}	
-	
-	public void FindVertexAngle()			// used to find angle of single vertices
-	{
-		verticesDirection = verticesAngles[i] - transform.position;
-		verticesAngle = Vector3.Angle(verticesDirection,Vector3.up);		
+		vertexAngle = 0;
+		verticesDirection = vertexCoord - transform.position;
+		float _angle = Vector3.Angle(verticesDirection,Vector3.up);		
 		float dirNum = AngleDir(Vector3.up, verticesDirection, Vector3.forward); 		
 			if(dirNum>0F)
 				{
-				actualAngle[i] += 360F-verticesAngle;				
+				vertexAngle += 360F-_angle;				
 				}
 				else
 				{
-				actualAngle[i] += verticesAngle;
+				vertexAngle += _angle;
 				}
-		
-	}
+//		Debug.Log (vertexAngle);
+	}	
 	
-	//variable to turn acute 180 degree angles into 360 degree angles
-		private float AngleDir(Vector3 fwd, Vector3 targetDir, Vector3 up) {
+		private float AngleDir(Vector3 fwd, Vector3 targetDir, Vector3 up) //variable to turn acute 180 degree angles into 360 degree angles
+			{ 
 			Vector3 perp = Vector3.Cross(fwd, targetDir);
 			float dir = Vector3.Dot(perp, up);		
 			if (dir > 0f) {
@@ -339,7 +282,77 @@ Vector3 rayPos;
 			
 		}	
 	
-	
+	//(playerPos + surfacePos) * desiredShadowLength
+	// extrude vertices of lit edges of poly (if it's visible), add both original and extruded value to vector list
+	public void AddVerticesToList() 					// adding vertices of poly to global vertices list 
+	{		
+		if (verticesListTemp.Count>0)
+		{
+		Vector3 _verticesListTemp = verticesListTemp[0]; //assigning first clockwise vertex of poly to temp value
+		RaycastHit hit;
+		if (Physics.Raycast(verticesListTemp[0], (verticesListTemp[0]- transform.position), out hit)) 			// raycasting to wall behind poly, if a hit, use that point...
+			{
+            verticesListTemp[0] = hit.point;				
+			FindVertexAngle(verticesListTemp[0]); 		// moving raycasted point a smidgeon, so as not to interfere with _verticesTemp (otherwise they have same angle when it comes to CW sorting)
+			vertexAngle = 360 - vertexAngle + 90 - 1f; 				
+			Vector3 vertNudge = verticesListTemp[0];
+			float vertexDist = Vector3.Distance(_verticesListTemp, hit.point); 
+			float addShadX = _verticesListTemp.x + vertexDist * Mathf.Cos(vertexAngle * Mathf.PI / 180);
+			float addShadY = _verticesListTemp.y + vertexDist * Mathf.Sin(vertexAngle * Mathf.PI / 180);
+			vertNudge = new Vector3(addShadX, addShadY, vertNudge.z);
+			verticesListTemp[0] = vertNudge;
+			Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.red);
+			}
+		else
+			{
+			verticesListTemp[0] = verticesListTemp[0]+((verticesListTemp[0]- transform.position)*Shadowlength); // if not, extrude point an arbitrary distance (Shadowlength)
+			FindVertexAngle(verticesListTemp[0]); 
+			vertexAngle = 360 - vertexAngle + 90 - 1f; 
+			Vector3 vertNudge = verticesListTemp[0];
+			float vertexDist = Vector3.Distance(_verticesListTemp, verticesListTemp[0]); 
+			float addShadX = _verticesListTemp.x + vertexDist * Mathf.Cos(vertexAngle * Mathf.PI / 180);
+			float addShadY = _verticesListTemp.y + vertexDist * Mathf.Sin(vertexAngle * Mathf.PI / 180);
+			vertNudge = new Vector3(addShadX, addShadY, vertNudge.z);
+			verticesListTemp[0] = vertNudge;
+			Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.red);
+			}
+		verticesList.Add(verticesListTemp[0]);			// add extruded poly vertex to global vertex list
+		verticesList.Add(_verticesListTemp);			// add actual vertex of poly to global vertex list
+			
+		_verticesListTemp = verticesListTemp[verticesListTemp.Count-1]; // same process again, but with last CW vertex of poly, and the points are added in reverse (extruded poly point last), to aid mesh creation
+		if (Physics.Raycast(verticesListTemp[verticesListTemp.Count-1], (verticesListTemp[verticesListTemp.Count-1]- transform.position), out hit))
+			{
+            verticesListTemp[verticesListTemp.Count-1] = hit.point;			 
+			FindVertexAngle(verticesListTemp[verticesListTemp.Count-1]); 
+			vertexAngle = 360 - vertexAngle + 90 + 1f; 
+			Vector3 vertNudge = verticesListTemp[verticesListTemp.Count-1];
+			float vertexDist = Vector3.Distance(_verticesListTemp, hit.point); 
+			float addShadX = _verticesListTemp.x + vertexDist * Mathf.Cos(vertexAngle * Mathf.PI / 180);
+			float addShadY = _verticesListTemp.y + vertexDist * Mathf.Sin(vertexAngle * Mathf.PI / 180);
+			vertNudge = new Vector3(addShadX, addShadY, vertNudge.z);
+			verticesListTemp[verticesListTemp.Count-1] = vertNudge;
+			Debug.DrawLine (_verticesListTemp,verticesListTemp[verticesListTemp.Count-1],Color.red);
+			}
+		else
+			{			
+			verticesListTemp[verticesListTemp.Count-1] = verticesListTemp[verticesListTemp.Count-1]+((verticesListTemp[verticesListTemp.Count-1]- transform.position)*Shadowlength); 
+			FindVertexAngle(verticesListTemp[verticesListTemp.Count-1]); 
+			vertexAngle = 360 - vertexAngle + 90 + 1f; 
+			Vector3 vertNudge = verticesListTemp[verticesListTemp.Count-1];
+			float vertexDist = Vector3.Distance(_verticesListTemp, verticesListTemp[verticesListTemp.Count-1]); 
+			float addShadX = _verticesListTemp.x + vertexDist * Mathf.Cos(vertexAngle * Mathf.PI / 180);
+			float addShadY = _verticesListTemp.y + vertexDist * Mathf.Sin(vertexAngle * Mathf.PI / 180);
+			vertNudge = new Vector3(addShadX, addShadY, vertNudge.z);
+			verticesListTemp[verticesListTemp.Count-1] = vertNudge;
+			Debug.DrawLine (_verticesListTemp,verticesListTemp[verticesListTemp.Count-1],Color.red);
+			}
+		verticesList.Add(_verticesListTemp);
+		verticesList.Add(verticesListTemp[verticesListTemp.Count-1]);	
+		}
+		verticesListTemp.Clear();
+		verticesAngles.Clear ();
+		
+	}	
 	
 	void DrawMesh()		// create mesh for main lightmesh
 	{	
