@@ -163,7 +163,7 @@ Vector3 rayPos;
 				verticesByNormals.Clear();
 			}
 			
-			AddBoundaryPoints(); 						// add the perimeter points	
+//			AddBoundaryPoints(); 						// add the perimeter points	
 			CompareVerticesAngles(verticesList);			// arrange global vertices list into CW order		
 			verticesList.Clear ();
 //			Debug.Log(""+verticesList.Count+" 174");
@@ -294,7 +294,7 @@ Vector3 rayPos;
 			{
             verticesListTemp[0] = hit.point;				
 			FindVertexAngle(verticesListTemp[0]); 		// moving raycasted point a smidgeon, so as not to interfere with _verticesTemp (otherwise they have same angle when it comes to CW sorting)
-			vertexAngle = 360 - vertexAngle + 90 - 1f; 				
+			vertexAngle = 360 - vertexAngle + 90 + 1f; 				
 			Vector3 vertNudge = verticesListTemp[0];
 			float vertexDist = Vector3.Distance(_verticesListTemp, hit.point); 
 			float addShadX = _verticesListTemp.x + vertexDist * Mathf.Cos(vertexAngle * Mathf.PI / 180);
@@ -307,7 +307,7 @@ Vector3 rayPos;
 			{
 			verticesListTemp[0] = verticesListTemp[0]+((verticesListTemp[0]- transform.position)*Shadowlength); // if not, extrude point an arbitrary distance (Shadowlength)
 			FindVertexAngle(verticesListTemp[0]); 
-			vertexAngle = 360 - vertexAngle + 90 - 1f; 
+			vertexAngle = 360 - vertexAngle + 90 + 1f; 
 			Vector3 vertNudge = verticesListTemp[0];
 			float vertexDist = Vector3.Distance(_verticesListTemp, verticesListTemp[0]); 
 			float addShadX = _verticesListTemp.x + vertexDist * Mathf.Cos(vertexAngle * Mathf.PI / 180);
@@ -324,7 +324,7 @@ Vector3 rayPos;
 			{
             verticesListTemp[verticesListTemp.Count-1] = hit.point;			 
 			FindVertexAngle(verticesListTemp[verticesListTemp.Count-1]); 
-			vertexAngle = 360 - vertexAngle + 90 + 1f; 
+			vertexAngle = 360 - vertexAngle + 90 - 1f; 
 			Vector3 vertNudge = verticesListTemp[verticesListTemp.Count-1];
 			float vertexDist = Vector3.Distance(_verticesListTemp, hit.point); 
 			float addShadX = _verticesListTemp.x + vertexDist * Mathf.Cos(vertexAngle * Mathf.PI / 180);
@@ -337,7 +337,7 @@ Vector3 rayPos;
 			{			
 			verticesListTemp[verticesListTemp.Count-1] = verticesListTemp[verticesListTemp.Count-1]+((verticesListTemp[verticesListTemp.Count-1]- transform.position)*Shadowlength); 
 			FindVertexAngle(verticesListTemp[verticesListTemp.Count-1]); 
-			vertexAngle = 360 - vertexAngle + 90 + 1f; 
+			vertexAngle = 360 - vertexAngle + 90 - 1f; 
 			Vector3 vertNudge = verticesListTemp[verticesListTemp.Count-1];
 			float vertexDist = Vector3.Distance(_verticesListTemp, verticesListTemp[verticesListTemp.Count-1]); 
 			float addShadX = _verticesListTemp.x + vertexDist * Mathf.Cos(vertexAngle * Mathf.PI / 180);
