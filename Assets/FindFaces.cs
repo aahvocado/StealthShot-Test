@@ -59,7 +59,17 @@ Vector3 rayPos;
 		//assign all shadow casting objects in scene to wall array
 		walls = GameObject.FindGameObjectsWithTag("Walls");	
 		ScanForObjects();
-		DetectObjectVertices();	
+		DetectObjectVertices();
+		AddBoundaryPoints(); 							// add the perimeter points	
+		CompareVerticesAngles(verticesList);			// arrange global vertices list into CW order
+		CreateSegments(verticesListTemp);				// create segment midpoints from vertices
+//		CheckVisibility									// check visibility of segments, remove if not visible
+		verticesList.Clear ();
+		for (int iP = 0; iP<verticesListTemp.Count; iP++) // add newly arranged CW vertices to list
+			{
+			verticesList.Add (verticesListTemp[iP]);			
+			}			
+		DrawMesh();
 		
 	}	
 
@@ -374,7 +384,7 @@ Vector3 rayPos;
 	{
 	segList.Clear();		
 	int iSeg = 0;
-	Debug.Log(_vectorListSeg.Count);	
+//	Debug.Log(_vectorListSeg.Count);	
 	for (iSeg = 0; iSeg<_vectorListSeg.Count-1; iSeg++)
 		{
 		RaycastHit hit; 
