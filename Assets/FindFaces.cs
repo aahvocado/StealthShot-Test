@@ -43,6 +43,7 @@ Vector3 vertNudge;
 float vertexAngle;
 Vector3 _verticesListTemp;
 public List <Vector3> verticesListTemp;
+public List <Vector3> segList;
 float verticesAngle;
 public Vector3[] finalVertices;	
 float[] actualAngle;
@@ -57,7 +58,6 @@ Vector3 rayPos;
 	{			
 		//assign all shadow casting objects in scene to wall array
 		walls = GameObject.FindGameObjectsWithTag("Walls");	
-
 		ScanForObjects();
 		DetectObjectVertices();	
 		
@@ -69,8 +69,19 @@ Vector3 rayPos;
 //		walls = GameObject.FindGameObjectsWithTag("Walls");
 //		ScanForObjects();
 		DetectObjectVertices();	
+		AddBoundaryPoints(); 							// add the perimeter points	
+		CompareVerticesAngles(verticesList);			// arrange global vertices list into CW order
+		CreateSegments(verticesListTemp);				// create segment midpoints from vertices
+//		CheckVisibility									// check visibility of segments, remove if not visible
+		verticesList.Clear ();
+		for (int iP = 0; iP<verticesListTemp.Count; iP++) // add newly arranged CW vertices to list
+			{
+			verticesList.Add (verticesListTemp[iP]);			
+			}			
+		DrawMesh();
 		}
 	
+	#region Analysing the scene for objects to use as walls
 	
 	public void ScanForObjects()						// finds objects in scene, arranges into CW order
 	{
@@ -99,25 +110,27 @@ Vector3 rayPos;
 					
 					}				
 				}
-			getPolys = false;
-			
-			CompareVerticesAngles(verticesByNormals);				// feed all vertices into angle comparison function
-			
+			getPolys = false;			
+			CompareVerticesAngles(verticesByNormals);				// feed all vertices into angle comparison function			
 			polyTransform.Add (verticesListTemp[0]);				// assign the lowest angle as point of reference for poly
+			
 			verticesListTemp.Clear();
 			verticesByNormals.Clear ();
+			
 			polyNumber++;
 			}
 		getPolys = true;
-		CompareVerticesAngles(polyTransform);
+		CompareVerticesAngles(polyTransform);						// compare global lowest angle vertices
 		getPolys = false;		
-		for (int iG = 0; iG< walls.Length; iG++) 					// re-assigning polys in CW order
-		{
-		polygon[iG] = polygonNumber[iG];
-		}		
+		for (int iG = 0; iG< walls.Length; iG++) 					// re-assigning polys in CW order to global list
+			{
+			polygon[iG] = polygonNumber[iG];
+			}		
 	
-	}
+	}	
+	#endregion
 	
+	#region Finding the vertices for applicable polygons
 	
 	public void DetectObjectVertices()					// establishes vertices of all shadow casting objects in scene, check to see which vertices are visible by player		
 	{			
@@ -127,7 +140,7 @@ Vector3 rayPos;
 		for (int _polyNumber = 0; _polyNumber<walls.Length; _polyNumber++)
 			{						
 			// highlight polygon being examined in red
-			polygon[_polyNumber].renderer.material.color = Color.red;						
+//			polygon[_polyNumber].renderer.material.color = Color.red;						
 			// get mesh of current polygon
 			Mesh meshHit = polygon[_polyNumber].GetComponent<MeshFilter>().mesh;	
 			// determine size of vertices array by defining how many vertices are facing down (i.e. the bottom of the polygon) using normals
@@ -161,33 +174,25 @@ Vector3 rayPos;
 //				if (!Physics.Raycast(vertices[i], (vertices[i]- transform.position), out hit))			
 //								{
 //            					_verticesList.Add (vertices[i]);
-//								Debug.DrawLine (transform.position,vertices[i],Color.green);
+								Debug.DrawLine (transform.position,vertices[i],Color.green);
 //								}
 				
-				_verticesList.Add (vertices[i]);
-				
-				
+				_verticesList.Add (vertices[i]);				
 				}						
 
-				CompareVerticesAngles(_verticesList);	// arrange polygon's vertices into CW order
-				AddVerticesToList(); 					// add to global vertices list
+				CompareVerticesAngles(_verticesList);		// arrange single polygon's vertices into CW order
+//				CreateSegments();				
+				AddVerticesToList(); 						// add to global vertices list
 				_verticesList.Clear(); 					
 				verticesByNormals.Clear();
-			}
-			
-			AddBoundaryPoints(); 						// add the perimeter points	
-			CompareVerticesAngles(verticesList);			// arrange global vertices list into CW order		
-			verticesList.Clear ();
-//			Debug.Log(""+verticesList.Count+" 174");
-			for (int iP = 0; iP<verticesListTemp.Count; iP++)
-			{
-			verticesList.Add (verticesListTemp[iP]);			
-			}			
-			
-			DrawMesh();	
+			}				
 		}
 	
-	public void AddBoundaryPoints()						// add perimeter points if visible
+	#endregion
+		
+	#region Adding extra vertices	
+	
+	public void AddBoundaryPoints()							// add perimeter points to complete mesh if visible
 	{
 		Vector3[] boundaryPoint = new Vector3[BoundaryPoints];
 		for (int iBound = 0; iBound<BoundaryPoints; iBound++)
@@ -209,6 +214,71 @@ Vector3 rayPos;
 			}
 	}	
 	
+	//(playerPos + surfacePos) * desiredShadowLength
+	// extrude vertices of lit edges of poly (if it's visible), add both original and extruded value to vector list
+	public void AddVerticesToList() 					// adding vertices of poly to global vertices list 
+	{		
+		if (verticesListTemp.Count>0)
+		{		
+		FindVertexAngle(verticesListTemp[0]); 	// find angle of start vertex of poly (CW speaking)	
+		MovePointOnCircle(-0.1f, vertexAngle, verticesListTemp[0]); // move it a negligable amount, so during the CW sweep it doesn't have exaclty the same angle as extruded point (creating mesh problems)
+		_verticesListTemp = vertNudge;		
+		
+		RaycastHit hit; // start vertex point extrapolation/extrusion
+//		if (!Physics.Linecast(transform.position, _verticesListTemp, out hit)) 			// check to see if vertex is visible
+//			{
+//	        Debug.DrawLine (transform.position,hit.point,Color.yellow);    
+			if (Physics.Raycast(verticesListTemp[0], (verticesListTemp[0]- transform.position), out hit)) 			// raycasting outwards from first CW poly point, if a hit, use that point...
+				{
+	            verticesListTemp[0] = hit.point;			
+//				Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.red);
+				}
+			else
+				{
+				verticesListTemp[0] = verticesListTemp[0]+((verticesListTemp[0]- transform.position)*Shadowlength); // if not, extrude point an arbitrary distance (Shadowlength)			
+//				Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.red);
+				}
+			verticesList.Add(verticesListTemp[0]);			// add extruded poly vertex to global vertex list
+			verticesList.Add(_verticesListTemp);			// add original vertex of poly to global vertex list
+//			}
+			
+		// adding middle vertices to mesh	
+//		for (int iVert = 1; iVert< verticesListTemp.Count-1; iVert++) // add middle vertices 
+//			{
+//			verticesList.Add (verticesListTemp[iVert]);	
+//			}			
+								
+		// same process as above, but with end vertex
+		vertNudge = verticesListTemp[verticesListTemp.Count-1];
+		FindVertexAngle(verticesListTemp[verticesListTemp.Count-1]);											
+		MovePointOnCircle(0.1f, vertexAngle, verticesListTemp[verticesListTemp.Count-1]);
+		_verticesListTemp = vertNudge;		
+//		if (!Physics.Linecast(transform.position, _verticesListTemp, out hit)) 			// check to see if vertex is visible
+//			{
+//			Debug.DrawLine (transform.position,hit.point,Color.magenta);	
+			if (Physics.Raycast(verticesListTemp[verticesListTemp.Count-1], (verticesListTemp[verticesListTemp.Count-1]- transform.position), out hit))
+				{
+	            verticesListTemp[verticesListTemp.Count-1] = hit.point;				
+//				Debug.DrawLine (_verticesListTemp,verticesListTemp[verticesListTemp.Count-1],Color.red);
+				}
+			else
+				{			
+				verticesListTemp[verticesListTemp.Count-1] = verticesListTemp[verticesListTemp.Count-1]+((verticesListTemp[verticesListTemp.Count-1]- transform.position)*Shadowlength); 			
+//				Debug.DrawLine (_verticesListTemp,verticesListTemp[verticesListTemp.Count-1],Color.red);
+				}
+			verticesList.Add(_verticesListTemp);							// add original vertex of poly to global vertex list
+			verticesList.Add(verticesListTemp[verticesListTemp.Count-1]);	// add extruded poly vertex to global vertex list
+//			}
+		}
+		verticesListTemp.Clear();
+		verticesAngles.Clear ();
+		
+	}	
+	
+	
+	#endregion
+		
+	#region Analysing the vertices
 	
 	public void CompareVerticesAngles(List<Vector3> verticesAngles)			//establish vertices angle in relation to player, sort in clockwise order
 	{
@@ -238,11 +308,11 @@ Vector3 rayPos;
 				{
 					if (iN == actualAngle.Length-1)
 					{					
-					if (getPolys== false)				// when function is being used for defining vertices
+					if (getPolys== false)				// when function is being used for comparing angle of individual vertices
 						{
 						verticesListTemp.Add (verticesAngles[iV]); 			// if angle is smallest, add corresponding vertex to global list
 						}
-					else 								// when function is being used for defining polys
+					else 								// when function is being used for comparing angle of polygons
 						{
 						polygonNumber.Add (polygon[iV]);
 						}
@@ -261,7 +331,7 @@ Vector3 rayPos;
 		
 	}
 	
-	public void FindVertexAngle (Vector3 vertexCoord)					// used to find angle of single vertex
+	public void FindVertexAngle (Vector3 vertexCoord)				// used to find angle of single vertex
 	{		
 		vertexAngle = 0;
 		verticesDirection = vertexCoord - transform.position;
@@ -275,10 +345,9 @@ Vector3 rayPos;
 				{
 				vertexAngle += _angle;
 				}
-//		Debug.Log (vertexAngle);
 	}	
 	
-		private float AngleDir(Vector3 fwd, Vector3 targetDir, Vector3 up) //variable to turn acute 180 degree angles into 360 degree angles
+		private float AngleDir(Vector3 fwd, Vector3 targetDir, Vector3 up) 	//variable to turn acute 180 degree angles into 360 degree angles
 			{ 
 			Vector3 perp = Vector3.Cross(fwd, targetDir);
 			float dir = Vector3.Dot(perp, up);		
@@ -292,59 +361,7 @@ Vector3 rayPos;
 			
 		}	
 	
-	//(playerPos + surfacePos) * desiredShadowLength
-	// extrude vertices of lit edges of poly (if it's visible), add both original and extruded value to vector list
-	public void AddVerticesToList() 					// adding vertices of poly to global vertices list 
-	{		
-		if (verticesListTemp.Count>0)
-		{		
-		FindVertexAngle(verticesListTemp[0]); 		
-		MovePointOnCircle(-0.1f, vertexAngle, verticesListTemp[0]); 
-		_verticesListTemp = vertNudge;		
-			
-		RaycastHit hit;
-		if (Physics.Raycast(verticesListTemp[0], (verticesListTemp[0]- transform.position), out hit)) 			// raycasting outwards from first CW poly point, if a hit, use that point...
-			{
-            verticesListTemp[0] = hit.point;			
-			Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.red);
-			}
-		else
-			{
-			verticesListTemp[0] = verticesListTemp[0]+((verticesListTemp[0]- transform.position)*Shadowlength); // if not, extrude point an arbitrary distance (Shadowlength)			
-			Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.red);
-			}
-		verticesList.Add(verticesListTemp[0]);			// add extruded poly vertex to global vertex list
-		verticesList.Add(_verticesListTemp);			// add actual vertex of poly to global vertex list
-		
-		for (int iVert = 1; iVert< verticesListTemp.Count-1; iVert++) // add middle vertices 
-			{
-			verticesList.Add (verticesListTemp[iVert]);	
-			}			
-								
-		vertNudge = verticesListTemp[verticesListTemp.Count-1];
-		FindVertexAngle(verticesListTemp[verticesListTemp.Count-1]);											// repeat above process but with last CW poly point
-		MovePointOnCircle(0.1f, vertexAngle, verticesListTemp[verticesListTemp.Count-1]);
-		_verticesListTemp = vertNudge;		
-			
-		if (Physics.Raycast(verticesListTemp[verticesListTemp.Count-1], (verticesListTemp[verticesListTemp.Count-1]- transform.position), out hit))
-			{
-            verticesListTemp[verticesListTemp.Count-1] = hit.point;				
-			Debug.DrawLine (_verticesListTemp,verticesListTemp[verticesListTemp.Count-1],Color.red);
-			}
-		else
-			{			
-			verticesListTemp[verticesListTemp.Count-1] = verticesListTemp[verticesListTemp.Count-1]+((verticesListTemp[verticesListTemp.Count-1]- transform.position)*Shadowlength); 			
-			Debug.DrawLine (_verticesListTemp,verticesListTemp[verticesListTemp.Count-1],Color.red);
-			}
-		verticesList.Add(_verticesListTemp);
-		verticesList.Add(verticesListTemp[verticesListTemp.Count-1]);	
-		}
-		verticesListTemp.Clear();
-		verticesAngles.Clear ();
-		
-	}
-	
-	public void MovePointOnCircle (float addAngle, float vertexAngle, Vector3 _vertNudge)
+	public void MovePointOnCircle (float addAngle, float vertexAngle, Vector3 _vertNudge) // used to shift vertices around player in a circle
 	{
 			vertexAngle = 360 - vertexAngle + 90 + addAngle;			
 			float vertexDist = Vector3.Distance(transform.position,_vertNudge); 
@@ -353,6 +370,33 @@ Vector3 rayPos;
 			vertNudge = new Vector3(addShadX, addShadY, _vertNudge.z);			
 	}
 	
+	public void CreateSegments (List<Vector3> _vectorListSeg)
+	{
+	segList.Clear();		
+	int iSeg = 0;
+	Debug.Log(_vectorListSeg.Count);	
+	for (iSeg = 0; iSeg<_vectorListSeg.Count-1; iSeg++)
+		{
+		RaycastHit hit; 
+		segList.Add ((_vectorListSeg[iSeg] + _vectorListSeg[iSeg+1])/2);				// find midpoint of segment
+		if (!Physics.Linecast(transform.position, segList[iSeg], out hit)) 			// check to see if midpoint of segment is visible
+			{	
+//			vectorListSeg.Add;
+			Debug.DrawLine (_vectorListSeg[iSeg],_vectorListSeg[iSeg+1],Color.magenta);
+			}
+		else
+			{
+				
+			}
+		}		
+		segList.Add ((_vectorListSeg[0] + _vectorListSeg[_vectorListSeg.Count-1])/2);		
+		Debug.DrawLine (_vectorListSeg[0],_vectorListSeg[_vectorListSeg.Count-1],Color.magenta);		
+	}
+	
+	
+	#endregion
+		
+	#region Drawing the mesh	
 	
 	void DrawMesh()		// create mesh for main lightmesh
 	{	
@@ -383,4 +427,6 @@ Vector3 rayPos;
 
 		
 	}
+	
+	#endregion
 }
