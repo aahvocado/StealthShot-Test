@@ -4,6 +4,7 @@ using System.Collections.Generic;
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 
 public class FindFaces : MonoBehaviour {
+public bool segSwitch;
 public GameObject meshHolder;
 public GameObject marker;
 GameObject[] polygon;
@@ -38,18 +39,22 @@ public List <Vector3> verticesList;
 public List <Vector3> _verticesList;
 public List <Vector3> verticesAngles;
 public List <Vector3> verticesByNormals;
+public List <Vector3> vectorListSeg;
 Vector3 verticesDirection;
 Vector3 vertNudge;
 float vertexAngle;
 Vector3 _verticesListTemp;
 public List <Vector3> verticesListTemp;
 public List <Vector3> segList;
+public Vector3[] segArray;
+public bool[] segPoint;
 float verticesAngle;
 public Vector3[] finalVertices;	
 float[] actualAngle;
 public float[] _actualAngle;
 float tempval;
 bool getPolys;
+public bool meshBuilt;
 
 Vector3 movePos;
 Vector3 rayPos;
@@ -63,33 +68,48 @@ Vector3 rayPos;
 		AddBoundaryPoints(); 							// add the perimeter points	
 		CompareVerticesAngles(verticesList);			// arrange global vertices list into CW order
 		CreateSegments(verticesListTemp);				// create segment midpoints from vertices
-//		CheckVisibility									// check visibility of segments, remove if not visible
+
 		verticesList.Clear ();
+//		for (int iP = 0; iP<vectorListSeg.Count; iP++) // add newly arranged CW vertices to list
+//			{
+//			verticesList.Add (vectorListSeg[iP]);			
+//			}
 		for (int iP = 0; iP<verticesListTemp.Count; iP++) // add newly arranged CW vertices to list
 			{
 			verticesList.Add (verticesListTemp[iP]);			
-			}			
+			}	
 		DrawMesh();
 		
 	}	
 
 	void Update ()
 		{
-		//assign all shadow casting objects in scene to wall array
-//		walls = GameObject.FindGameObjectsWithTag("Walls");
-//		ScanForObjects();
-		DetectObjectVertices();	
-		AddBoundaryPoints(); 							// add the perimeter points	
-		CompareVerticesAngles(verticesList);			// arrange global vertices list into CW order
-		CreateSegments(verticesListTemp);				// create segment midpoints from vertices
-//		CheckVisibility									// check visibility of segments, remove if not visible
-		verticesList.Clear ();
-		for (int iP = 0; iP<verticesListTemp.Count; iP++) // add newly arranged CW vertices to list
+			//assign all shadow casting objects in scene to wall array
+//			walls = GameObject.FindGameObjectsWithTag("Walls");
+		
+			ScanForObjects();
+			DetectObjectVertices();	
+			AddBoundaryPoints(); 							// add the perimeter points	
+			CompareVerticesAngles(verticesList);			// arrange global vertices list into CW order
+			CreateSegments(verticesListTemp);				// create segment midpoints from vertices
+	
+			verticesList.Clear ();
+			if (segSwitch == true)
 			{
-			verticesList.Add (verticesListTemp[iP]);			
-			}			
-		DrawMesh();
-		}
+				for (int iP = 0; iP<vectorListSeg.Count; iP++) // add newly arranged CW vertices to list
+					{
+					verticesList.Add (vectorListSeg[iP]);			
+					}
+			}
+			else
+			{
+				for (int iP = 0; iP<verticesListTemp.Count; iP++) // add newly arranged CW vertices to list
+					{
+					verticesList.Add (verticesListTemp[iP]);			
+					}
+			}
+			DrawMesh();
+			}
 	
 	#region Analysing the scene for objects to use as walls
 	
@@ -292,53 +312,53 @@ Vector3 rayPos;
 	
 	public void CompareVerticesAngles(List<Vector3> verticesAngles)			//establish vertices angle in relation to player, sort in clockwise order
 	{
-	// -part 1: assign angles
-	actualAngle = new float[verticesAngles.Count];	
-	for (int i=0; i<verticesAngles.Count; i++)
-		{
-		FindVertexAngle(verticesAngles[i]);
-		actualAngle[i] = vertexAngle;				
-		}		
-	// -part 2: compare to other angles
-	float sortCheckSize = actualAngle.Length;
-	int iV = 0;	
-	while (sortCheckSize > 0)
-		{	
-		while (actualAngle[iV] == 361)
+		// -part 1: assign angles
+		actualAngle = new float[verticesAngles.Count];	
+		for (int i=0; i<verticesAngles.Count; i++)
 			{
-			iV++;
-			}
-		if (actualAngle[iV] != 361)
-			{
-			tempval = actualAngle[iV];	
-			}
-		 for (int iN=0; iN<actualAngle.Length;iN++)
-			{					
-			if ((tempval< actualAngle[iN]) || (tempval== actualAngle[iN]))
-				{
-					if (iN == actualAngle.Length-1)
-					{					
-					if (getPolys== false)				// when function is being used for comparing angle of individual vertices
-						{
-						verticesListTemp.Add (verticesAngles[iV]); 			// if angle is smallest, add corresponding vertex to global list
-						}
-					else 								// when function is being used for comparing angle of polygons
-						{
-						polygonNumber.Add (polygon[iV]);
-						}
-					sortCheckSize -= 1;
-					actualAngle[iV] = 361;
-					iV = 0;
-					}
-				}
-			if (tempval> actualAngle[iN])
+			FindVertexAngle(verticesAngles[i]);
+			actualAngle[i] = vertexAngle;				
+			}		
+		// -part 2: compare to other angles
+		float sortCheckSize = actualAngle.Length;
+		int iV = 0;	
+		while (sortCheckSize > 0)
+			{	
+			while (actualAngle[iV] == 361)
 				{
 				iV++;
-				iN = actualAngle.Length-1;				
 				}
-			}			
-        }
-		
+			if (actualAngle[iV] != 361)
+				{
+				tempval = actualAngle[iV];	
+				}
+			 for (int iN=0; iN<actualAngle.Length;iN++)
+				{					
+				if ((tempval< actualAngle[iN]) || (tempval== actualAngle[iN]))
+					{
+						if (iN == actualAngle.Length-1)
+						{					
+						if (getPolys== false)				// when function is being used for comparing angle of individual vertices
+							{
+							verticesListTemp.Add (verticesAngles[iV]); 			// if angle is smallest, add corresponding vertex to global list
+							}
+						else 								// when function is being used for comparing angle of polygons
+							{
+							polygonNumber.Add (polygon[iV]);
+							}
+						sortCheckSize -= 1;
+						actualAngle[iV] = 361;
+						iV = 0;
+						}
+					}
+				if (tempval> actualAngle[iN])
+					{
+					iV++;
+					iN = actualAngle.Length-1;				
+					}
+				}			
+	        }
+			
 	}
 	
 	public void FindVertexAngle (Vector3 vertexCoord)				// used to find angle of single vertex
@@ -372,36 +392,83 @@ Vector3 rayPos;
 		}	
 	
 	public void MovePointOnCircle (float addAngle, float vertexAngle, Vector3 _vertNudge) // used to shift vertices around player in a circle
-	{
-			vertexAngle = 360 - vertexAngle + 90 + addAngle;			
-			float vertexDist = Vector3.Distance(transform.position,_vertNudge); 
-			float addShadX = transform.position.x + vertexDist * Mathf.Cos(vertexAngle * Mathf.PI / 180);
-			float addShadY = transform.position.y + vertexDist * Mathf.Sin(vertexAngle * Mathf.PI / 180);
-			vertNudge = new Vector3(addShadX, addShadY, _vertNudge.z);			
-	}
 	
-	public void CreateSegments (List<Vector3> _vectorListSeg)
-	{
-	segList.Clear();		
-	int iSeg = 0;
-//	Debug.Log(_vectorListSeg.Count);	
-	for (iSeg = 0; iSeg<_vectorListSeg.Count-1; iSeg++)
 		{
+		vertexAngle = 360 - vertexAngle + 90 + addAngle;			
+		float vertexDist = Vector3.Distance(transform.position,_vertNudge); 
+		float addShadX = transform.position.x + vertexDist * Mathf.Cos(vertexAngle * Mathf.PI / 180);
+		float addShadY = transform.position.y + vertexDist * Mathf.Sin(vertexAngle * Mathf.PI / 180);
+		vertNudge = new Vector3(addShadX, addShadY, _vertNudge.z);}			
+	
+	
+	public void CreateSegments (List<Vector3> _vectorListSeg) // used to analyse each segment (point between vertices)
+			
+		{
+//		segList.Clear();
+		segArray = new Vector3[_vectorListSeg.Count]; 
+		segPoint = new bool [_vectorListSeg.Count];		
+		vectorListSeg.Clear ();
+		int iSeg = 0;
 		RaycastHit hit; 
-		segList.Add ((_vectorListSeg[iSeg] + _vectorListSeg[iSeg+1])/2);				// find midpoint of segment
-		if (!Physics.Linecast(transform.position, segList[iSeg], out hit)) 			// check to see if midpoint of segment is visible
-			{	
-//			vectorListSeg.Add;
-			Debug.DrawLine (_vectorListSeg[iSeg],_vectorListSeg[iSeg+1],Color.magenta);
-			}
-		else
+		for (iSeg = 0; iSeg<_vectorListSeg.Count-1; iSeg++)
+			{		
+			segArray[iSeg] = ((_vectorListSeg[iSeg] + _vectorListSeg[iSeg+1])/2);										// find midpoint of segment
+			if (!Physics.Linecast(transform.position, segArray[iSeg], out hit)) 										// check to see if midpoint of 1st segment is visible
+				{				
+				segPoint[iSeg] = true;
+				Debug.DrawLine (_vectorListSeg[iSeg],_vectorListSeg[iSeg+1],Color.magenta);
+				}
+			else
+				{
+				segPoint[iSeg] = false;	
+				}			
+			}		
+			segArray[_vectorListSeg.Count-1] = ((_vectorListSeg[0] + _vectorListSeg[_vectorListSeg.Count-1])/2);		// analysing segment between last and first vertices
+			if (!Physics.Linecast(transform.position, segArray[_vectorListSeg.Count-1], out hit)) 						// check to see if midpoint of segment is visible
+				{	
+				segPoint[_vectorListSeg.Count-1] = true;
+				Debug.DrawLine (_vectorListSeg[_vectorListSeg.Count-1],_vectorListSeg[0],Color.magenta);
+				}
+			else
+				{
+				segPoint[_vectorListSeg.Count-1] = false;	
+				}		
+		
+		
+		
+		for (iSeg = 0; iSeg<_vectorListSeg.Count-1; iSeg++)
 			{
-				
+//			if (segPoint[iSeg] == true) 
+//				{
+//					if (segPoint[iSeg+1] == true)
+//					{
+//					vectorListSeg.Add(_vectorListSeg[iSeg+1]);
+//					}
+//					if (segPoint[iSeg+1] == false)
+//					{
+//					vectorListSeg.Add(_vectorListSeg[iSeg+1]);	
+//					}
+//				}
+			
+			if (segPoint[iSeg] == false)				
+				{
+				if (segPoint[iSeg+1] == false)
+					{
+//					vectorListSeg.Add(_vectorListSeg[iSeg+1]);
+					}
+				}
+			else {vectorListSeg.Add(_vectorListSeg[iSeg]);}
+			
 			}
-		}		
-		segList.Add ((_vectorListSeg[0] + _vectorListSeg[_vectorListSeg.Count-1])/2);		
-		Debug.DrawLine (_vectorListSeg[0],_vectorListSeg[_vectorListSeg.Count-1],Color.magenta);		
-	}
+//		if (segPoint[_vectorListSeg.Count-1] == true && segPoint[0] == true)
+//				{
+//				vectorListSeg.Add(_vectorListSeg[0]);
+//				}
+		
+//				vectorListSeg.Add(_vectorListSeg[iSeg]);
+//				Debug.DrawLine (_vectorListSeg[iSeg],_vectorListSeg[iSeg+1],Color.magenta);
+		
+		}
 	
 	
 	#endregion
@@ -434,7 +501,7 @@ Vector3 rayPos;
 		mesh.triangles = triangles;		
 		verticesList.Clear ();
 		verticesListTemp.Clear();
-
+		meshBuilt = true;
 		
 	}
 	
