@@ -187,38 +187,42 @@ Vector3 rayPos;
 					verticesByNormals.Add(verticesTemp[i]);					
 					}		
 				}									
-			verticesTemp = verticesByNormals.ToArray();						
-			// assign size of vertices array, +1 to include player position
-			vertices = new Vector3[verticesByNormals.Count+1];
+			verticesTemp = verticesByNormals.ToArray();		
+			vertices = new Vector3[verticesByNormals.Count+1];			// assign size of vertices array, +1 to include player position
 			for (int i=1; i<verticesByNormals.Count+1; i++)
 				{							
 					// adjust vertices for scale of poly
 					vertices[i] = new Vector3 (verticesTemp[i-1].x*polygon[_polyNumber].transform.lossyScale.x, verticesTemp[i-1].y*polygon[_polyNumber].transform.lossyScale.y,transform.position.z);
-					// adjust for world position
-					vertices[i] = (polygon[_polyNumber].transform.position - vertices[i]);
-					vertices[i].z = transform.position.z;					
-	
-					RaycastHit hit;	
-					Debug.DrawLine (transform.position,vertices[i],Color.green);
+					vertices[i] = (polygon[_polyNumber].transform.position - vertices[i]); // adjust for world position
+					vertices[i].z = transform.position.z;	
 					
-					_verticesList.Add (vertices[i]);				
+					Vector3 BoundTest = vertices[i]+ (vertices[i]-transform.position)*-0.001f ; // moving a test vertices towards player to avoid problems with linecast detection
+					Debug.Log(""+vertices[i]+""+BoundTest+"");		
+					Debug.DrawLine (transform.position,BoundTest,Color.yellow);
+					Debug.DrawLine (transform.position,vertices[i],Color.green);
+					if (!polygon[_polyNumber].collider.bounds.Contains(BoundTest))
+						{
+						RaycastHit hit;
+						if (!Physics.Linecast (BoundTest, transform.position, out hit))
+							{
+							_verticesList.Add (vertices[i]);
+							}
+						}
 				}						
 
-				CompareVerticesAngles(_verticesList, polygon[_polyNumber].transform.position);		// arrange single polygon's vertices into CW order
-				CreateSegments(verticesListTemp);
-				Debug.Log (""+_polyNumber+"hello");
+			CompareVerticesAngles(_verticesList, transform.position);		// arrange single polygon's vertices into CW order
+//				CreateSegments(verticesListTemp);
+//				Debug.Log (""+_polyNumber+"hello");
 				
-				verticesListTemp.Clear ();
-				for (int iP = 0; iP<vectorListSeg.Count; iP++) // add newly arranged CW vertices to list
-					{
-					verticesListTemp.Add (vectorListSeg[iP]);			
-					}
+//				verticesListTemp.Clear ();
+//				for (int iP = 0; iP<vectorListSeg.Count; iP++) // add newly arranged CW vertices to list
+//					{
+//					verticesListTemp.Add (vectorListSeg[iP]);			
+//					}				
 				
-				
-				AddVerticesToList(); 						// add to global vertices list
-				
-				_verticesList.Clear(); 					
-				verticesByNormals.Clear();
+			AddVerticesToList(); 						// add to global vertices list
+			_verticesList.Clear(); 					
+			verticesByNormals.Clear();
 			}				
 		}
 	
@@ -255,25 +259,23 @@ Vector3 rayPos;
 		if (verticesListTemp.Count>0)
 		{		
 		FindVertexAngle(verticesListTemp[0],transform.position); 	// find angle of start vertex of poly (CW speaking)	
-		MovePointOnCircle(-0.1f, vertexAngle, verticesListTemp[0]); // move it a negligable amount, so during the CW sweep it doesn't have exaclty the same angle as extruded point (creating mesh problems)
+		MovePointOnCircle(-0.01f, vertexAngle, verticesListTemp[0]); // move it a negligable amount, so during the CW sweep it doesn't have exactly the same angle as extruded point (creating mesh problems)
 		_verticesListTemp = vertNudge;		
 		
 		RaycastHit hit; // start vertex point extrapolation/extrusion
-//		if (!Physics.Linecast(transform.position, _verticesListTemp, out hit)) 			// check to see if vertex is visible
-//			{
-//	        Debug.DrawLine (transform.position,hit.point,Color.yellow);    
-			if (Physics.Raycast(verticesListTemp[0], (verticesListTemp[0]- transform.position), out hit)) 			// raycasting outwards from first CW poly point, if a hit, use that point...
-				{
-	            verticesListTemp[0] = hit.point;			
-				Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.red);
-				}
-			else
-				{
-				verticesListTemp[0] = verticesListTemp[0]+((verticesListTemp[0]- transform.position)*Shadowlength); // if not, extrude point an arbitrary distance (Shadowlength)			
-				Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.red);
-				}
-			verticesList.Add(verticesListTemp[0]);			// add extruded poly vertex to global vertex list
-			verticesList.Add(_verticesListTemp);			// add original vertex of poly to global vertex list
+//   		verticesListTemp[0] = verticesListTemp[0]+ (verticesListTemp[0]-transform.position)*-0.001f ;
+		if (Physics.Raycast(verticesListTemp[0], (verticesListTemp[0]- transform.position), out hit)) 			// raycasting outwards from first CW poly point, if a hit, use that point...
+			{
+            verticesListTemp[0] = hit.point;			
+			Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.red);
+			}
+		else
+			{
+			verticesListTemp[0] = verticesListTemp[0]+((verticesListTemp[0]- transform.position)*Shadowlength); // if not, extrude point an arbitrary distance (Shadowlength)			
+			Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.red);
+			}
+		verticesList.Add(verticesListTemp[0]);			// add extruded poly vertex to global vertex list
+		verticesList.Add(_verticesListTemp);			// add original vertex of poly to global vertex list
 //			}
 			
 		// adding middle vertices to mesh	
@@ -285,23 +287,23 @@ Vector3 rayPos;
 		// same process as above, but with end vertex
 		vertNudge = verticesListTemp[verticesListTemp.Count-1];
 		FindVertexAngle(verticesListTemp[verticesListTemp.Count-1],transform.position);											
-		MovePointOnCircle(0.1f, vertexAngle, verticesListTemp[verticesListTemp.Count-1]);
+		MovePointOnCircle(0.01f, vertexAngle, verticesListTemp[verticesListTemp.Count-1]);
 		_verticesListTemp = vertNudge;		
 //		if (!Physics.Linecast(transform.position, _verticesListTemp, out hit)) 			// check to see if vertex is visible
 //			{
 //			Debug.DrawLine (transform.position,hit.point,Color.magenta);	
-			if (Physics.Raycast(verticesListTemp[verticesListTemp.Count-1], (verticesListTemp[verticesListTemp.Count-1]- transform.position), out hit))
-				{
-	            verticesListTemp[verticesListTemp.Count-1] = hit.point;				
-				Debug.DrawLine (_verticesListTemp,verticesListTemp[verticesListTemp.Count-1],Color.red);
-				}
-			else
-				{			
-				verticesListTemp[verticesListTemp.Count-1] = verticesListTemp[verticesListTemp.Count-1]+((verticesListTemp[verticesListTemp.Count-1]- transform.position)*Shadowlength); 			
-				Debug.DrawLine (_verticesListTemp,verticesListTemp[verticesListTemp.Count-1],Color.red);
-				}
-			verticesList.Add(_verticesListTemp);							// add original vertex of poly to global vertex list
-			verticesList.Add(verticesListTemp[verticesListTemp.Count-1]);	// add extruded poly vertex to global vertex list
+		if (Physics.Raycast(verticesListTemp[verticesListTemp.Count-1], (verticesListTemp[verticesListTemp.Count-1]- transform.position), out hit))
+			{
+            verticesListTemp[verticesListTemp.Count-1] = hit.point;				
+			Debug.DrawLine (_verticesListTemp,verticesListTemp[verticesListTemp.Count-1],Color.red);
+			}
+		else
+			{			
+			verticesListTemp[verticesListTemp.Count-1] = verticesListTemp[verticesListTemp.Count-1]+((verticesListTemp[verticesListTemp.Count-1]- transform.position)*Shadowlength); 			
+			Debug.DrawLine (_verticesListTemp,verticesListTemp[verticesListTemp.Count-1],Color.red);
+			}
+		verticesList.Add(_verticesListTemp);							// add original vertex of poly to global vertex list
+		verticesList.Add(verticesListTemp[verticesListTemp.Count-1]);	// add extruded poly vertex to global vertex list
 //			}
 		}
 		verticesListTemp.Clear();
