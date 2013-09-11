@@ -57,6 +57,7 @@ public float[] _actualAngle;
 float tempval;
 bool getPolys;
 public bool meshBuilt;
+RaycastHit hit;
 
 Vector3 movePos;
 Vector3 rayPos;
@@ -91,29 +92,29 @@ Vector3 rayPos;
 			//assign all shadow casting objects in scene to wall array
 			walls = GameObject.FindGameObjectsWithTag("Walls");
 		
-//			ScanForObjects();
-//			DetectObjectVertices();
-////			Debug.Log (""+verticesList.Count+"vl1");
-//			AddBoundaryPoints(); 							// add the perimeter points	
-//			CompareVerticesAngles(verticesList, transform.position);			// arrange global vertices list into CW order
-////			CreateSegments(verticesListTemp);				// create segment midpoints from vertices
-////			Debug.Log (""+verticesListTemp.Count+"vlt2");
-//			verticesList.Clear ();
-////			if (segSwitch == true)
-////			{
-////				for (int iP = 0; iP<vectorListSeg.Count; iP++) // add newly arranged CW vertices to list
-////					{
-////					verticesList.Add (vectorListSeg[iP]);			
-////					}
-////			}
-////			else
-////			{
-//				for (int iP = 0; iP<verticesListTemp.Count; iP++) // add newly arranged CW vertices to list
+			ScanForObjects();
+			DetectObjectVertices();
+//			Debug.Log (""+verticesList.Count+"vl1");
+			AddBoundaryPoints(); 							// add the perimeter points	
+			CompareVerticesAngles(verticesList, transform.position);			// arrange global vertices list into CW order
+//			CreateSegments(verticesListTemp);				// create segment midpoints from vertices
+//			Debug.Log (""+verticesListTemp.Count+"vlt2");
+			verticesList.Clear ();
+//			if (segSwitch == true)
+//			{
+//				for (int iP = 0; iP<vectorListSeg.Count; iP++) // add newly arranged CW vertices to list
 //					{
-//					verticesList.Add (verticesListTemp[iP]);			
+//					verticesList.Add (vectorListSeg[iP]);			
 //					}
-////			}
-//			DrawMesh();
+//			}
+//			else
+//			{
+				for (int iP = 0; iP<verticesListTemp.Count; iP++) // add newly arranged CW vertices to list
+					{
+					verticesList.Add (verticesListTemp[iP]);			
+					}
+//			}
+			DrawMesh();
 			}
 	
 	#region Analysing the scene for objects to use as walls
@@ -198,10 +199,7 @@ Vector3 rayPos;
 					vertices[i] = (polygon[_polyNumber].transform.position - vertices[i]); // adjust for world position
 					vertices[i].z = transform.position.z;	
 					
-					Vector3 BoundTest = vertices[i]+ (vertices[i]-transform.position)*-0.001f ; // moving a test vertices towards player to avoid problems with linecast detection
-//					Debug.Log(""+vertices[i]+""+BoundTest+"");		
-//					Debug.DrawLine (transform.position,BoundTest,Color.yellow);
-//					Debug.DrawLine (transform.position,vertices[i],Color.green);
+					Vector3 BoundTest = vertices[i]+ (vertices[i]-transform.position)*-0.001f ; // create a test vertices, move it towards player to avoid problems with linecast detection
 					if (!polygon[_polyNumber].collider.bounds.Contains(BoundTest))
 						{
 						RaycastHit hit;
@@ -255,85 +253,94 @@ Vector3 rayPos;
 	}	
 	
 	
-	// extrude vertices of lit edges of poly (if it's visible), add both original and extruded value to vector list
 	public void AddVerticesToList() 					// adding vertices of poly to global vertices list 
 	{		
-		RaycastHit hit;
-		if (verticesListTemp.Count>0)
-		{		
-		FindVertexAngle(verticesListTemp[0],transform.position); 	// find angle of start vertex of poly (CW speaking)				
-//		Debug.Log (vertexAngle);
-		_verticesListTemp = verticesListTemp[0];		
-		MovePointOnCircle(0, vertexAngle, verticesListTemp[0], -0.01f);
-			
-		Vector3 _checkBounds = vertNudge;
-		 // start vertex point extrapolation/extrusion
-		if (!polygon[polyNumber].collider.bounds.Contains(_checkBounds))
-			{
-			if (Physics.Raycast(verticesListTemp[0], (verticesListTemp[0]- transform.position), out hit)) 			// raycasting outwards from first CW poly point, if a hit, use that point...
-				{
-	            verticesListTemp[0] = hit.point;
-//				MovePointOnCircle(1f, vertexAngle, verticesListTemp[0], 0);
-//				verticesListTemp[0] = vertNudge;
-				Debug.DrawLine (_checkBounds,verticesListTemp[0],Color.yellow);
-				}
-//			}
-			else
-				{
-				verticesListTemp[0] = verticesListTemp[0]+((verticesListTemp[0]- transform.position)*Shadowlength); // if not, extrude point an arbitrary distance (Shadowlength)			
-//				Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.magenta);
-//				MovePointOnCircle(1f, vertexAngle, verticesListTemp[0], 0);
-//				verticesListTemp[0] = vertNudge;
-				
-				Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.cyan);
-				}
-//			}
-		verticesList.Add(verticesListTemp[0]);			// add extruded poly vertex to global vertex list		
-		verticesList.Add(_verticesListTemp);			// add original vertex of poly to global vertex list		
-			}
-		// adding middle vertices to mesh	
-//		for (int iVert = 1; iVert< verticesListTemp.Count-1; iVert++) // add middle vertices 
-//			{
-//			verticesList.Add (verticesListTemp[iVert]);	
-//			}			
-								
-		// same process as above, but with end vertex
-		}
 		
-		if (verticesListTemp.Count>1)
-		{
-//		vertNudge = verticesListTemp[verticesListTemp.Count-1];
-		FindVertexAngle(verticesListTemp[verticesListTemp.Count-1],transform.position);
+		if (verticesListTemp.Count==1) // if poly only has one vertex visible, find out which edge of poly it's on, so that final CompareVerticesAngles sweep puts it in correct order
+			{
+			MovePointOnCircle(-0.001f, vertexAngle, verticesListTemp[0], 0);
+			Vector3 _checkBoundsLeft = vertNudge;
+			MovePointOnCircle(0.001f, vertexAngle, verticesListTemp[0], 0);
+			Vector3 _checkBoundsRight = vertNudge;
 			
-//		MovePointOnCircle(0, vertexAngle, verticesListTemp[verticesListTemp.Count-1], 0);
-//		_verticesListTemp = vertNudge;
-		_verticesListTemp = verticesListTemp[verticesListTemp.Count-1];
+			// create imaginary point based on vertex and see whether, if you move it left or right, it is contained in poly, thereby judging which side of poly it is on
 			
-		MovePointOnCircle(0, vertexAngle, verticesListTemp[verticesListTemp.Count-1], -0.01f);
-		Vector3 _checkBounds = vertNudge;
-			
-		if (!polygon[polyNumber].collider.bounds.Contains(_checkBounds))
-			{						
-			if (Physics.Raycast(verticesListTemp[verticesListTemp.Count-1], (verticesListTemp[verticesListTemp.Count-1]- transform.position), out hit))
+			if (!polygon[polyNumber].collider.bounds.Contains(_checkBoundsLeft))		
 				{
-	            verticesListTemp[verticesListTemp.Count-1] = hit.point;				
-				Debug.DrawLine (_checkBounds,verticesListTemp[verticesListTemp.Count-1],Color.green);
+				ExtrapolateLastVector();
 				}
-			else
-				{			
-				verticesListTemp[verticesListTemp.Count-1] = verticesListTemp[verticesListTemp.Count-1]+((verticesListTemp[verticesListTemp.Count-1]- transform.position)*Shadowlength); 			
-				Debug.DrawLine (_checkBounds,verticesListTemp[verticesListTemp.Count-1],Color.red);
-				}				
-//			}
-		verticesList.Add(_verticesListTemp);							// add original vertex of poly to global vertex list
-		verticesList.Add(verticesListTemp[verticesListTemp.Count-1]);	// add extruded poly vertex to global vertex list
+			if (!polygon[polyNumber].collider.bounds.Contains(_checkBoundsRight))
+				{
+				ExtrapolateFirstVector();
+				}
+			
 			}
-		}
+		
+		if (verticesListTemp.Count>1)	// if poly has more than one vertex visible, use vertices on opposing edges to calculate shadow
+			{				
+			ExtrapolateFirstVector();				
+			for (int iVert = 1; iVert< verticesListTemp.Count-1; iVert++) // add middle vertices of poly
+				{
+				verticesList.Add (verticesListTemp[iVert]);	
+				}	
+			ExtrapolateLastVector();
+			}
 		verticesListTemp.Clear();
 		verticesAngles.Clear ();
 		
-	}	
+	}
 	
+	
+	public void ExtrapolateFirstVector()		// creating, clockwise speaking, edges of shadow for a poly by extruding edge vertex to either poly behind it or arbitrary distance off screen
+		{
+		FindVertexAngle(verticesListTemp[0],transform.position); 	// find angle of start vertex of poly (CW speaking)		
+				
+				MovePointOnCircle(0, vertexAngle, verticesListTemp[0], -0.01f);			
+				Vector3 _checkBounds = vertNudge;
+				MovePointOnCircle(-0.001f, vertexAngle, verticesListTemp[0], 0);
+				_verticesListTemp = vertNudge;
+				if (!polygon[polyNumber].collider.bounds.Contains(_checkBounds))
+					{
+					if (Physics.Raycast(verticesListTemp[0], (verticesListTemp[0]- transform.position), out hit)) 	// raycasting outwards from first CW poly point, if it hits another poly, use that point...
+						{
+			            verticesListTemp[0] = hit.point;		
+						Debug.DrawLine (_checkBounds,verticesListTemp[0],Color.yellow);
+						}		
+					else
+						{
+						verticesListTemp[0] = verticesListTemp[0]+((verticesListTemp[0]- transform.position)*Shadowlength); // if not, extrude point an arbitrary distance (Shadowlength)		
+						Debug.DrawLine (_verticesListTemp,verticesListTemp[0],Color.cyan);
+						}		
+				verticesList.Add(verticesListTemp[0]);			// add extruded poly vertex (shadow edge point) to global vertex list		
+				verticesList.Add(_verticesListTemp);			// add original vertex of poly to global vertex list		
+					}		
+		}
+	
+	public void ExtrapolateLastVector()		// creating, clockwise speaking, last segment of shadow for a poly
+		{
+		FindVertexAngle(verticesListTemp[verticesListTemp.Count-1],transform.position);			
+				MovePointOnCircle(0, vertexAngle, verticesListTemp[verticesListTemp.Count-1], -0.01f);
+				Vector3 _checkBounds = vertNudge;
+				MovePointOnCircle(0.001f, vertexAngle, verticesListTemp[verticesListTemp.Count-1], 0);
+				_verticesListTemp = vertNudge;
+					
+				if (!polygon[polyNumber].collider.bounds.Contains(_checkBounds))
+					{						
+					if (Physics.Raycast(verticesListTemp[verticesListTemp.Count-1], (verticesListTemp[verticesListTemp.Count-1]- transform.position), out hit))
+						{
+			            verticesListTemp[verticesListTemp.Count-1] = hit.point;				
+						Debug.DrawLine (_checkBounds,verticesListTemp[verticesListTemp.Count-1],Color.green);
+						}
+					else
+						{			
+						verticesListTemp[verticesListTemp.Count-1] = verticesListTemp[verticesListTemp.Count-1]+((verticesListTemp[verticesListTemp.Count-1]- transform.position)*Shadowlength); 			
+						Debug.DrawLine (_checkBounds,verticesListTemp[verticesListTemp.Count-1],Color.red);
+						}				
+		//			}
+				verticesList.Add(_verticesListTemp);							// add original vertex of poly to global vertex list
+				verticesList.Add(verticesListTemp[verticesListTemp.Count-1]);	// add extruded poly vertex to global vertex list
+					}
+		}
 	
 	#endregion
 		
@@ -376,7 +383,7 @@ Vector3 rayPos;
 						if (getPolys== false)				//// if function is being used for comparing angle of individual vertices
 							{							
 								verticesListTemp.Add (verticesAngles[iV]); 			// if angle is smallest, add corresponding vertex to global list
-								Debug.Log ("379"+ verticesAngles[iV]+" "+iV+"");
+//								Debug.Log ("379"+ verticesAngles[iV]+" "+iV+"");
 
 							}
 						else 								// when function is being used for comparing angle of entire polygons
@@ -385,7 +392,7 @@ Vector3 rayPos;
 							}
 						sortCheckSize -= 1;
 						actualAngle[iV] = 361;
-						Debug.Log ("388 entered");
+//						Debug.Log ("388 entered");
 						iV = 0;
 						}
 						
