@@ -67,7 +67,8 @@ Vector3 rayPos;
 		walls = GameObject.FindGameObjectsWithTag("Walls");	
 		ScanForObjects();
 		DetectObjectVertices();
-		AddBoundaryPoints(); 							// add the perimeter points	
+		AddBoundaryPoints(); 											// add the perimeter points	
+		Debug.Log ("Start");
 		CompareVerticesAngles(verticesList,transform.position);			// arrange global vertices list into CW order
 ////		CreateSegments(verticesListTemp);				// create segment midpoints from vertices
 //
@@ -301,11 +302,12 @@ Vector3 rayPos;
 		
 		if (verticesListTemp.Count>1)
 		{
-		vertNudge = verticesListTemp[verticesListTemp.Count-1];
+//		vertNudge = verticesListTemp[verticesListTemp.Count-1];
 		FindVertexAngle(verticesListTemp[verticesListTemp.Count-1],transform.position);
 			
-		MovePointOnCircle(0.001f, vertexAngle, verticesListTemp[verticesListTemp.Count-1], 0);
-		_verticesListTemp = vertNudge;
+//		MovePointOnCircle(0, vertexAngle, verticesListTemp[verticesListTemp.Count-1], 0);
+//		_verticesListTemp = vertNudge;
+		_verticesListTemp = verticesListTemp[verticesListTemp.Count-1];
 			
 		MovePointOnCircle(0, vertexAngle, verticesListTemp[verticesListTemp.Count-1], -0.01f);
 		Vector3 _checkBounds = vertNudge;
@@ -372,45 +374,46 @@ Vector3 rayPos;
 						if (iN == actualAngle.Length-1)		// .. and there's no more angles to compare it to...
 						{					
 						if (getPolys== false)				//// if function is being used for comparing angle of individual vertices
-							{
-//							if (tempval == actualAngle[iN] && iN != iV)	// check to see if it's the same size as the comparison angle
-//								{
-//								float tempDistanceA = Vector3.Distance(transform.position, verticesAngles[iV]);			// if it is, check the distance from player
-//								float angleDistanceB = Vector3.Distance(transform.position, verticesAngles[iN]);
-//								Debug.Log ("A "+ verticesAngles[iV]+""+actualAngle[iV]+" B "+verticesAngles[iN]+""+actualAngle[iN]+"");
-//								if (tempDistanceA > angleDistanceB)
-//									{
-//									verticesListTemp.Add (verticesAngles[iV]);									// if it's not as far, add other vertex first
-//									verticesListTemp.Add (verticesAngles[iN]);
-//									actualAngle[iN] = 361;
-//									}
-//								if (tempDistanceA < angleDistanceB)
-//									{
-//									verticesListTemp.Add (verticesAngles[iN]);
-//									verticesListTemp.Add (verticesAngles[iV]);
-//									actualAngle[iN] = 361;
-//									}								
-//								}
-//							else
-//								{
+							{							
 								verticesListTemp.Add (verticesAngles[iV]); 			// if angle is smallest, add corresponding vertex to global list
-//								}
+								Debug.Log ("379"+ verticesAngles[iV]+" "+iV+"");
+
 							}
-						else 								// when function is being used for comparing angle of polygons
+						else 								// when function is being used for comparing angle of entire polygons
 							{
 							polygonNumber.Add (polygon[iV]);
 							}
 						sortCheckSize -= 1;
 						actualAngle[iV] = 361;
+						Debug.Log ("388 entered");
 						iV = 0;
 						}
 						
-						if (tempval == actualAngle[iN] && iN != iV)	// check to see if it's the same size as the comparison angle
-								{
-								float tempDistanceA = Vector3.Distance(transform.position, verticesAngles[iV]);			// if it is, check the distance from player
-								float angleDistanceB = Vector3.Distance(transform.position, verticesAngles[iN]);
-								Debug.Log ("A "+ verticesAngles[iV]+""+actualAngle[iV]+" B "+verticesAngles[iN]+""+actualAngle[iN]+"");
-								}
+//						if (tempval == actualAngle[iN] && iN != iV)	// check to see if it's the same size as the comparison angle
+//								{
+//								float tempDistanceA = Vector3.Distance(transform.position, verticesAngles[iV]);			// if it is, check the distance from player
+//								float angleDistanceB = Vector3.Distance(transform.position, verticesAngles[iN]);
+////								Debug.Log ("A "+ verticesAngles[iV]+""+actualAngle[iV]+" " +tempDistanceA+" B "+verticesAngles[iN]+""+actualAngle[iN]+" " +angleDistanceB+"");
+//								if (tempDistanceA > angleDistanceB)
+//									{
+//									verticesListTemp.Add (verticesAngles[iV]);									// if it's not as far, add other vertex first
+//									Debug.Log ("418"+ verticesAngles[iV]+" "+iV+"");
+//									verticesListTemp.Add (verticesAngles[iN]);									
+//									Debug.Log ("420"+ verticesAngles[iV]+" "+iN+"");
+//									}
+//								if (tempDistanceA < angleDistanceB)
+//									{
+//									verticesListTemp.Add (verticesAngles[iN]);
+//									Debug.Log ("425"+ verticesAngles[iV]+" "+iN+"");
+//									verticesListTemp.Add (verticesAngles[iV]);	
+//									Debug.Log ("427"+ verticesAngles[iV]+" "+iV+"");
+//									}
+//								sortCheckSize -= 1;
+//								actualAngle[iV] = 361;
+//								actualAngle[iN] = 361;
+//								iV = 0;
+//								
+//								}
 					
 					}
 				if (tempval> actualAngle[iN])				// if angle to be compared is larger than comparison angle, exit loop, moving onto next angle
