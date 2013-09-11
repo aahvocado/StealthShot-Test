@@ -64,105 +64,48 @@ Vector3 rayPos;
 	
 	void Start () 
 	{				
-		//assign all shadow casting objects in scene to wall array
-		walls = GameObject.FindGameObjectsWithTag("Walls");	
-		ScanForObjects();
-		DetectObjectVertices();
-		AddBoundaryPoints(); 											// add the perimeter points	
-		Debug.Log ("Start");
-		CompareVerticesAngles(verticesList,transform.position);			// arrange global vertices list into CW order
-////		CreateSegments(verticesListTemp);				// create segment midpoints from vertices
-//
-		verticesList.Clear ();
-//		
-//		for (int iP = 0; iP<vectorListSeg.Count; iP++) // add newly arranged CW vertices to list
+		walls = GameObject.FindGameObjectsWithTag("Walls");		// initiate array to include all polygons tagged 'wall'	
+//		ScanForObjects();
+//		DetectObjectVertices();
+//		AddBoundaryPoints(); 											// add the perimeter points	
+//		CompareVerticesAngles(verticesList,transform.position);			// arrange global vertices list into CW order
+//		verticesList.Clear ();
+//		for (int iP = 0; iP<verticesListTemp.Count; iP++) // add newly arranged CW vertices to list
 //			{
-//			verticesList.Add (vectorListSeg[iP]);			
-//			}
-		for (int iP = 0; iP<verticesListTemp.Count; iP++) // add newly arranged CW vertices to list
-			{
-			verticesList.Add (verticesListTemp[iP]);			
-			}	
-		DrawMesh();
+//			verticesList.Add (verticesListTemp[iP]);			
+//			}	
+//		DrawMesh();
 		
 	}	
 
 	void Update ()
 		{	
-			//assign all shadow casting objects in scene to wall array
-			walls = GameObject.FindGameObjectsWithTag("Walls");
-		
+			//assign all shadow casting objects in scene to wall array			
+			walls = GameObject.FindGameObjectsWithTag("Walls");					// initiate array to include all polygons tagged 'wall'	
 			ScanForObjects();
-			DetectObjectVertices();
-//			Debug.Log (""+verticesList.Count+"vl1");
-			AddBoundaryPoints(); 							// add the perimeter points	
+			DetectObjectVertices();												// detect all poly's vertices
+			AddBoundaryPoints(); 												// add the perimeter points	
 			CompareVerticesAngles(verticesList, transform.position);			// arrange global vertices list into CW order
-//			CreateSegments(verticesListTemp);				// create segment midpoints from vertices
-//			Debug.Log (""+verticesListTemp.Count+"vlt2");
 			verticesList.Clear ();
-//			if (segSwitch == true)
-//			{
-//				for (int iP = 0; iP<vectorListSeg.Count; iP++) // add newly arranged CW vertices to list
-//					{
-//					verticesList.Add (vectorListSeg[iP]);			
-//					}
-//			}
-//			else
-//			{
-				for (int iP = 0; iP<verticesListTemp.Count; iP++) // add newly arranged CW vertices to list
+				for (int iP = 0; iP<verticesListTemp.Count; iP++) 				// add newly arranged CW vertices to list
 					{
 					verticesList.Add (verticesListTemp[iP]);			
 					}
-//			}
 			DrawMesh();
 			}
 	
 	#region Analysing the scene for objects to use as walls
 	
-	public void ScanForObjects()						// finds objects in scene, arranges into CW order
-	{
-		// initiate array to include all polygons tagged 'wall'					
-		polygon = new GameObject[walls.Length];
+	public void ScanForObjects()						// finds objects in scene,
+	{	
+				
+		polygon = new GameObject[walls.Length]; 		
 		polyNumber = 0;
-//		polyTransform.Clear ();
 		foreach(GameObject wall in walls)
 			{
 			polygon[polyNumber] = wall.gameObject;
-//			// find lowest angle vertices
-//			Mesh polyMesh = polygon[polyNumber].GetComponent<MeshFilter>().mesh;
-//			normals = polyMesh.normals;
-//			verticesTemp = polyMesh.vertices;						
-//			for (int i=0; i<polyMesh.normals.Length ; i++)
-//				{
-//				if (normals[i].z == 1)
-//					{								
-//					// adjust vertices for scale of poly
-//					verticesTemp[i] = new Vector3 (verticesTemp[i].x*polygon[polyNumber].transform.lossyScale.x, verticesTemp[i].y*polygon[polyNumber].transform.lossyScale.y,transform.position.z);
-//					// adjust for world position
-//					verticesTemp[i] = polygon[polyNumber].transform.position - verticesTemp[i];
-//					// flatten to z plane
-//					verticesTemp[i].z = transform.position.z;
-//					verticesByNormals.Add(verticesTemp[i]);
-//					
-//					}				
-//				}
-//			getPolys = false;			
-//			CompareVerticesAngles(verticesByNormals, transform.position);				// feed all vertices into angle comparison function			
-//			polyTransform.Add (verticesListTemp[0]);				// assign the lowest angle as point of reference for poly
-//			
-//			verticesListTemp.Clear();
-//			verticesByNormals.Clear ();
-//			
 			polyNumber++;
 			}
-//		getPolys = true;
-//		CompareVerticesAngles(polyTransform,transform.position);						// compare global lowest angle vertices
-//		getPolys = false;		
-//		for (int iG = 0; iG< walls.Length; iG++) 					// re-assigning polys in CW order to global list
-//			{
-//			polygon[iG] = polygonNumber[iG];
-//			}		
-	
 	}	
 	#endregion
 	
@@ -210,15 +153,7 @@ Vector3 rayPos;
 						}
 				}						
 
-			CompareVerticesAngles(_verticesList, transform.position);		// arrange single polygon's vertices into CW order
-//				CreateSegments(verticesListTemp);
-//				Debug.Log (""+_polyNumber+"hello");
-				
-//				verticesListTemp.Clear ();
-//				for (int iP = 0; iP<vectorListSeg.Count; iP++) // add newly arranged CW vertices to list
-//					{
-//					verticesListTemp.Add (vectorListSeg[iP]);			
-//					}				
+			CompareVerticesAngles(_verticesList, transform.position);		// arrange single polygon's vertices into CW order			
 				
 			AddVerticesToList(); 						// add to global vertices list
 			_verticesList.Clear(); 					
@@ -263,7 +198,7 @@ Vector3 rayPos;
 			MovePointOnCircle(0.001f, vertexAngle, verticesListTemp[0], 0);
 			Vector3 _checkBoundsRight = vertNudge;
 			
-			// create imaginary point based on vertex and see whether, if you move it left or right, it is contained in poly, thereby judging which side of poly it is on
+			// create imaginary point based on vertex and see whether, if you move it left or right, it is then in poly's boundary, thereby judging which side of poly it is on
 			
 			if (!polygon[polyNumber].collider.bounds.Contains(_checkBoundsLeft))		
 				{
@@ -291,7 +226,7 @@ Vector3 rayPos;
 	}
 	
 	
-	public void ExtrapolateFirstVector()		// creating, clockwise speaking, edges of shadow for a poly by extruding edge vertex to either poly behind it or arbitrary distance off screen
+	public void ExtrapolateFirstVector()		// creating, clockwise speaking, first edge of shadow for a poly by extruding edge vertex to either poly behind it or arbitrary distance off screen
 		{
 		FindVertexAngle(verticesListTemp[0],transform.position); 	// find angle of start vertex of poly (CW speaking)		
 				
@@ -316,7 +251,7 @@ Vector3 rayPos;
 					}		
 		}
 	
-	public void ExtrapolateLastVector()		// creating, clockwise speaking, last segment of shadow for a poly
+	public void ExtrapolateLastVector()		// creating, clockwise speaking, last edge of shadow for a poly
 		{
 		FindVertexAngle(verticesListTemp[verticesListTemp.Count-1],transform.position);			
 				MovePointOnCircle(0, vertexAngle, verticesListTemp[verticesListTemp.Count-1], -0.01f);
@@ -335,8 +270,7 @@ Vector3 rayPos;
 						{			
 						verticesListTemp[verticesListTemp.Count-1] = verticesListTemp[verticesListTemp.Count-1]+((verticesListTemp[verticesListTemp.Count-1]- transform.position)*Shadowlength); 			
 						Debug.DrawLine (_checkBounds,verticesListTemp[verticesListTemp.Count-1],Color.red);
-						}				
-		//			}
+						}			
 				verticesList.Add(_verticesListTemp);							// add original vertex of poly to global vertex list
 				verticesList.Add(verticesListTemp[verticesListTemp.Count-1]);	// add extruded poly vertex to global vertex list
 					}
@@ -348,7 +282,7 @@ Vector3 rayPos;
 	
 	public void CompareVerticesAngles(List<Vector3> verticesAngles, Vector3 centrePoint)			//establish vertices angle in relation to player, sort in clockwise order
 	{
-		// -part 1: assign angles
+		// -part 1: assign angles to list
 		actualAngle = new float[verticesAngles.Count];	
 		for (int i=0; i<verticesAngles.Count; i++)
 			{
@@ -358,9 +292,10 @@ Vector3 rayPos;
 		testArray = new float[verticesAngles.Count]; 
 		for (int i=0; i<actualAngle.Length; i++)
 			{
-//			actualAngle[i] = Mathf.Round(actualAngle[i]*100)/100;
+//			actualAngle[i] = Mathf.Round(actualAngle[i]*100)/100; // rounding angles to 2 decimal places
 			testArray[i] = actualAngle[i];				
 			}
+		
 		// -part 2: compare to other angles
 		float sortCheckSize = actualAngle.Length;			//number of angles to check through
 		int iV = 0;	
@@ -382,9 +317,7 @@ Vector3 rayPos;
 						{					
 						if (getPolys== false)				//// if function is being used for comparing angle of individual vertices
 							{							
-								verticesListTemp.Add (verticesAngles[iV]); 			// if angle is smallest, add corresponding vertex to global list
-//								Debug.Log ("379"+ verticesAngles[iV]+" "+iV+"");
-
+							verticesListTemp.Add (verticesAngles[iV]); 			// if angle is smallest, add correspondingly numbered vertex to global list
 							}
 						else 								// when function is being used for comparing angle of entire polygons
 							{
@@ -392,36 +325,8 @@ Vector3 rayPos;
 							}
 						sortCheckSize -= 1;
 						actualAngle[iV] = 361;
-//						Debug.Log ("388 entered");
 						iV = 0;
-						}
-						
-//						if (tempval == actualAngle[iN] && iN != iV)	// check to see if it's the same size as the comparison angle
-//								{
-//								float tempDistanceA = Vector3.Distance(transform.position, verticesAngles[iV]);			// if it is, check the distance from player
-//								float angleDistanceB = Vector3.Distance(transform.position, verticesAngles[iN]);
-////								Debug.Log ("A "+ verticesAngles[iV]+""+actualAngle[iV]+" " +tempDistanceA+" B "+verticesAngles[iN]+""+actualAngle[iN]+" " +angleDistanceB+"");
-//								if (tempDistanceA > angleDistanceB)
-//									{
-//									verticesListTemp.Add (verticesAngles[iV]);									// if it's not as far, add other vertex first
-//									Debug.Log ("418"+ verticesAngles[iV]+" "+iV+"");
-//									verticesListTemp.Add (verticesAngles[iN]);									
-//									Debug.Log ("420"+ verticesAngles[iV]+" "+iN+"");
-//									}
-//								if (tempDistanceA < angleDistanceB)
-//									{
-//									verticesListTemp.Add (verticesAngles[iN]);
-//									Debug.Log ("425"+ verticesAngles[iV]+" "+iN+"");
-//									verticesListTemp.Add (verticesAngles[iV]);	
-//									Debug.Log ("427"+ verticesAngles[iV]+" "+iV+"");
-//									}
-//								sortCheckSize -= 1;
-//								actualAngle[iV] = 361;
-//								actualAngle[iN] = 361;
-//								iV = 0;
-//								
-//								}
-					
+						}					
 					}
 				if (tempval> actualAngle[iN])				// if angle to be compared is larger than comparison angle, exit loop, moving onto next angle
 					{
@@ -434,7 +339,7 @@ Vector3 rayPos;
 	}
 	
 	public void FindVertexAngle (Vector3 vertexCoord, Vector3 centrePoint)				// used to find angle of single vertex
-	{		
+		{		
 		vertexAngle = 0;
 		verticesDirection = vertexCoord - centrePoint;
 		float _angle = Vector3.Angle(verticesDirection,Vector3.up);		
@@ -447,7 +352,7 @@ Vector3 rayPos;
 				{
 				vertexAngle += _angle;
 				}
-	}	
+		}	
 	
 		private float AngleDir(Vector3 fwd, Vector3 targetDir, Vector3 up) 	//variable to turn acute 180 degree angles into 360 degree angles
 			{ 
@@ -473,7 +378,7 @@ Vector3 rayPos;
 		vertNudge = new Vector3(addShadX, addShadY, _vertNudge.z);}			
 	
 	
-	public void CreateSegments (List<Vector3> _vectorListSeg) // used to analyse each segment (point between vertices)
+	public void CreateSegments (List<Vector3> _vectorListSeg) 				// used to analyse each segment (point between vertices)
 			
 		{
 //		segList.Clear();
@@ -559,34 +464,30 @@ Vector3 rayPos;
 	#region Drawing the mesh	
 	
 	void DrawMesh()		// create mesh for main lightmesh
-	{	
-	Mesh mesh = meshHolder.GetComponent<MeshFilter>().mesh;
-//	Debug.Log(""+verticesList.Count+" 309");
-	finalVertices = new Vector3 [verticesList.Count+1];	
-	// assign triangles	
-	triangles = new int [verticesList.Count*3];	
-	for(int v = 1, t = 1; v < verticesList.Count+1; v++, t += 3)
-		{				
-			finalVertices[v] = verticesList[v-1];
-			// make sure lightmesh is flat
-			Vector3 tempvert = finalVertices[v-1];
-			tempvert.z = transform.position.z;
-			finalVertices[v-1] = tempvert;
-			triangles[t] = v;
-			triangles[t + 1] = v + 1;
-		}
-		triangles[triangles.Length-1] = 1;		
-		
-//		finalVertices[verticesList.Count] = finalVertices[0];
+		{	
+		Mesh mesh = meshHolder.GetComponent<MeshFilter>().mesh;
+		finalVertices = new Vector3 [verticesList.Count+1];	
+		// assign triangles	
+		triangles = new int [verticesList.Count*3];	
+		for(int v = 1, t = 1; v < verticesList.Count+1; v++, t += 3)
+			{				
+				finalVertices[v] = verticesList[v-1];
+				// make sure lightmesh is flat
+				Vector3 tempvert = finalVertices[v-1];
+				tempvert.z = transform.position.z;
+				finalVertices[v-1] = tempvert;
+				triangles[t] = v;
+				triangles[t + 1] = v + 1;
+			}
+		triangles[triangles.Length-1] = 1;	
 		finalVertices[0] = transform.position;		
 		mesh.vertices = finalVertices;
-//		Debug.Log(""+verticesList.Count+" 329");
 		mesh.triangles = triangles;		
 		verticesList.Clear ();
 		verticesListTemp.Clear();
 		meshBuilt = true;
 		
-	}
+		}
 	
 	#endregion
 }
