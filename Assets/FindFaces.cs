@@ -9,12 +9,12 @@ public float enlargeScale;
 Vector3 _enlargeScale;
 public GameObject meshHolder;
 public GameObject marker;
-GameObject[] polygon;
+public GameObject[] polygon;
 public int BoundaryPoints;
 public float Shadowlength;
 GameObject[] walls;	
 public float[] testArray;
-int polyNumber;
+public int polyNumber;
 //bool lastHit;
 //bool meshDrawn;
 //public int numberOfRays;
@@ -57,6 +57,7 @@ public float[] _actualAngle;
 float tempval;
 bool getPolys;
 public bool meshBuilt;
+public bool	polyScanned;
 RaycastHit hit;
 
 Vector3 movePos;
@@ -129,12 +130,12 @@ Vector3 rayPos;
 			for (int i=0; i<meshHit.normals.Length ; i++)
 				{
 				if (normals[i].z == 1)
-					{
+					{					
 					verticesByNormals.Add(verticesTemp[i]);					
 					}		
 				}									
 			verticesTemp = verticesByNormals.ToArray();		
-			vertices = new Vector3[verticesByNormals.Count+1];			// assign size of vertices array, +1 to include player position
+			vertices = new Vector3[verticesByNormals.Count+1];			// assign size of vertices array, +1 to include player position			
 			for (int i=1; i<verticesByNormals.Count+1; i++)
 				{							
 					// adjust vertices for scale of poly
@@ -149,10 +150,11 @@ Vector3 rayPos;
 						if (!Physics.Linecast (BoundTest, transform.position, out hit))
 							{
 							_verticesList.Add (vertices[i]);
+//							Debug.Log ("Pork");
 							}
 						}
 				}						
-
+//			Debug.Log ("156 - "+_verticesList.Count+"");			
 			CompareVerticesAngles(_verticesList, transform.position);		// arrange single polygon's vertices into CW order					
 			AddVerticesToList(); 						// add to global vertices list
 			_verticesList.Clear(); 					
@@ -189,16 +191,23 @@ Vector3 rayPos;
 	
 	public void AddVerticesToList() 					// adding vertices of poly to global vertices list 
 	{
+	polyScanned = true;	
+		if (Physics.Raycast(transform.position, Vector3.up, out hit))
+			{
+//			Debug.Log (hit.collider.name);
+//			Debug.Log (polygon[polyNumber].name);
+			if (hit.collider == polygon[polyNumber].collider)
+				{
+//				Debug.Log (""+transform.position.x+"");
+//				Debug.Log (""+verticesListTemp[0].x+"");	
+//				Debug.Log (""+verticesListTemp[verticesListTemp.Count-1].x+"");	
+				Vector3 tempVertices = verticesListTemp[0];
+				verticesListTemp[0] = verticesListTemp[verticesListTemp.Count-1];
+				verticesListTemp[verticesListTemp.Count-1] = tempVertices;
+				
+				}
+			}
 		
-//	if (verticesList.Count == 0 && verticesListTemp[0].x>transform.position.x && verticesListTemp[verticesListTemp.Count-1].x<transform.position.x && verticesListTemp[0].y>transform.position.y )
-//		{
-//		Debug.Log (""+transform.position.x+" "+verticesListTemp[0].x+" "+verticesListTemp[verticesListTemp.Count-1].x+" ");		
-//		Vector3 tempVertices = verticesListTemp[0];
-//		verticesListTemp[0] = verticesListTemp[verticesListTemp.Count-1];
-//		verticesListTemp[verticesListTemp.Count-1] = tempVertices;		
-//		}
-//	else
-//		{		
 		if (verticesListTemp.Count==1) // if poly only has one vertex visible, find out which edge of poly it's on, so that final CompareVerticesAngles sweep puts it in correct order
 			{
 			MovePointOnCircle(-0.001f, vertexAngle, verticesListTemp[0], 0);
@@ -403,88 +412,7 @@ Vector3 rayPos;
 		float vertexDist = (Vector3.Distance(transform.position,_vertNudge)) - moveTowardPlayer; 
 		float addShadX = transform.position.x + vertexDist * Mathf.Cos(vertexAngle * Mathf.PI / 180); 
 		float addShadY = transform.position.y + vertexDist * Mathf.Sin(vertexAngle * Mathf.PI / 180);
-		vertNudge = new Vector3(addShadX, addShadY, _vertNudge.z);}			
-	
-	
-	public void CreateSegments (List<Vector3> _vectorListSeg) 				// used to analyse each segment (point between vertices)
-			
-		{
-//		segList.Clear();
-		
-		segArray = new Vector3[_vectorListSeg.Count]; 
-		segPoint = new bool [_vectorListSeg.Count];		
-		vectorListSeg.Clear ();
-		int iSeg = 0;
-		RaycastHit hit; 
-		for (iSeg = 0; iSeg<_vectorListSeg.Count; iSeg++)
-			{		
-			if (iSeg+1 <= _vectorListSeg.Count-1)
-				{
-				segArray[iSeg] = ((_vectorListSeg[iSeg] + _vectorListSeg[iSeg+1])/2);										// find midpoint of segment
-				if (!Physics.Linecast(transform.position, segArray[iSeg], out hit)) 										// check to see if midpoint of 1st segment is visible
-					{				
-					segPoint[iSeg] = true;
-					Debug.DrawLine (_vectorListSeg[iSeg],_vectorListSeg[iSeg+1],Color.magenta);
-					}
-				else
-					{
-					segPoint[iSeg] = false;	
-					}			
-				}
-			if (iSeg+1 > _vectorListSeg.Count-1)
-				{
-				segArray[_vectorListSeg.Count-1] = ((_vectorListSeg[_vectorListSeg.Count-1] + _vectorListSeg[0])/2);		// analysing segment between last and first vertices
-				if (!Physics.Linecast(transform.position, segArray[_vectorListSeg.Count-1], out hit)) 						// check to see if midpoint of segment is visible
-					{	
-					segPoint[_vectorListSeg.Count-1] = true;
-					Debug.DrawLine (_vectorListSeg[_vectorListSeg.Count-1],_vectorListSeg[0],Color.magenta);
-					}
-				else
-					{
-					segPoint[_vectorListSeg.Count-1] = false;	
-					}
-				}
-			}
-		
-		
-		for (iSeg = 0; iSeg< _vectorListSeg.Count; iSeg++)
-			{
-//		
-			if (iSeg+1 <= _vectorListSeg.Count-1)
-				{				
-				if (segPoint[iSeg] == false)				
-					{
-					if (segPoint[iSeg+1] == false)
-						{	
-						}
-					else {vectorListSeg.Add(_vectorListSeg[iSeg+1]);}
-					}
-				else {vectorListSeg.Add(_vectorListSeg[iSeg+1]);}
-				}
-			
-			if (iSeg+1 > _vectorListSeg.Count-1)
-				{					
-				if (segPoint[_vectorListSeg.Count-1] == false)				
-					{
-					if (segPoint[0] == false)
-						{	
-						}
-					else {vectorListSeg.Add(_vectorListSeg[0]);}
-					}
-				else {vectorListSeg.Add(_vectorListSeg[0]);}	
-				}
-//			vectorListSeg.Add(_vectorListSeg[iSeg]);
-			
-			}
-//		if (segPoint[_vectorListSeg.Count-1] == true && segPoint[0] == true)
-//				{
-//				vectorListSeg.Add(_vectorListSeg[0]);
-//				}
-		
-//				vectorListSeg.Add(_vectorListSeg[iSeg]);
-//				Debug.DrawLine (_vectorListSeg[iSeg],_vectorListSeg[iSeg+1],Color.magenta);
-		
-		}
+		vertNudge = new Vector3(addShadX, addShadY, _vertNudge.z);}	
 	
 	
 	#endregion

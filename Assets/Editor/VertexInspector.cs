@@ -17,15 +17,24 @@ GUISkin handles;
 		GUI.skin = handles;
 		GameObject TestSphere = GameObject.Find("Test Sphere");
 		FindFaces findFaces = (FindFaces) TestSphere.GetComponent(typeof(FindFaces));
-		if (findFaces.meshBuilt == true){
+		if (findFaces.meshBuilt == true)
+		{
 			for(int i = 0; i< findFaces.finalVertices.Length; i++)
 			{
 			Handles.Label (findFaces.finalVertices[i], ""+i+"");
 			Handles.color = Color.blue;
 			Handles.Label (new Vector3(100,0,83), "Vertices");
-			
-//			Debug.Log(findFaces.finalVertices[0]);
 			}
 		}
+		if (findFaces.polyScanned == true)
+		{	
+			for(int i = 0; i< findFaces.polyNumber; i++)
+			{
+			Handles.Label (findFaces.polygon[i].transform.position, ""+i+"");
+			Handles.color = Color.red;
+			Handles.Label (new Vector3(100,20,83), "Polys");
+			}
+		}
+		
 	}
 }
