@@ -232,13 +232,12 @@ Vector3 rayPos;
 		
 	}
 	
-	public void CheckVertexVisible (Vector3 vertexToCheck)
+	public void CheckVertexVisible (Vector3 vertexToCheck)				// make imaginary point to left and right of point to establish where it is on poly
 		{
 //			Debug.Log (""+215+"");
 			FindVertexAngle(vertexToCheck,transform.position);
-			MovePointOnCircle(-0.001f, vertexAngle, vertexToCheck, 0);	
-			
-//			MovePointOnCircle(-1f, vertexAngle, vertexToCheck, 0);
+//			MovePointOnCircle(-0.001f, vertexAngle, vertexToCheck, 0);				
+			MovePointOnCircle(-0.005f, vertexAngle, vertexToCheck, 0);
 		
 //			Debug.Log ("Vertex To Check - "+ vertexToCheck+"");
 //			Debug.Log ("verticesListTemp[0] - "+ verticesListTemp[0]+"");
@@ -246,48 +245,81 @@ Vector3 rayPos;
 			Vector3 _checkBoundsCW = vertNudge;
 		
 //			Debug.DrawLine (_checkBoundsCW,transform.position,Color.magenta);
-//			Debug.DrawLine (vertexToCheck,transform.position,Color.grey);
-		
-			MovePointOnCircle(0.001f, vertexAngle, vertexToCheck, 0);
-//			MovePointOnCircle(1f, vertexAngle, vertexToCheck, 0);
+//			Debug.DrawLine (vertexToCheck,transform.position,Color.grey);			
+//			vertexAngle = vertexAngleTemp;
+//			MovePointOnCircle(0.001f, vertexAngle, vertexToCheck, 0);
+			MovePointOnCircle(0.005f, vertexAngle, vertexToCheck, 0);
 			Vector3 _checkBoundsACW = vertNudge;
 		
 //			Debug.DrawLine (_checkBoundsACW,transform.position,Color.yellow);
 		
-			if (polygon[polyNumber].collider.bounds.Contains(_checkBoundsCW))	
+			if (polygon[polyNumber].collider.bounds.Contains(_checkBoundsCW)&&!polygon[polyNumber].collider.bounds.Contains(_checkBoundsACW))	
 				{
 //				Debug.Log ("241");
 				ExtrapolateFirstVector(vertexToCheck);				
 				}				
-			if (polygon[polyNumber].collider.bounds.Contains(_checkBoundsACW))
+			if (polygon[polyNumber].collider.bounds.Contains(_checkBoundsACW)&&!polygon[polyNumber].collider.bounds.Contains(_checkBoundsCW))
 				{
 //				Debug.Log ("246");
 				ExtrapolateLastVector(vertexToCheck);				
-				}			
-//			if (!polygon[polyNumber].collider.bounds.Contains(_checkBoundsACW) && !polygon[polyNumber].collider.bounds.Contains(_checkBoundsCW)) 
-//				{ // if vertex is frontmost point on poly, _checkbounds has to be moved away from player a smidge, so as to be inside the poly when being moved left or right
-//				FindVertexAngle(vertexToCheck,transform.position);
-//				MovePointOnCircle(-0.0001f, vertexAngle, vertexToCheck, -0.001f);
-//				_checkBoundsACW = vertNudge;
-//				Debug.DrawLine (_checkBoundsACW,transform.position,Color.magenta);
-////				MovePointOnCircle(0.0001f, vertexAngle, vertexToCheck, 0.01f);
-//				MovePointOnCircle(0.0001f, vertexAngle, vertexToCheck, -0.001f);
-//				_checkBoundsCW = vertNudge;
-////				Debug.DrawLine (_checkBoundsCW,transform.position,Color.yellow);
-//			
-////				Debug.Log ("254");
-//			
-//				if (polygon[polyNumber].collider.bounds.Contains(_checkBoundsCW))		
-//					{
-////					Debug.Log ("258");
-//					ExtrapolateFirstVector(vertexToCheck);					
-//					}				
-//				if (polygon[polyNumber].collider.bounds.Contains(_checkBoundsACW))
-//					{
-////					Debug.Log ("263");
-//					ExtrapolateLastVector(vertexToCheck);					
+				}
+		
+			if (!polygon[polyNumber].collider.bounds.Contains(_checkBoundsACW) && !polygon[polyNumber].collider.bounds.Contains(_checkBoundsCW)) 
+				{ // if vertex is frontmost point on poly and directly below player, _checkbounds has to be moved away from player a smidge, as otherwise it will always be outside
+				FindVertexAngle(vertexToCheck,transform.position);
+				MovePointOnCircle(-0.1f, vertexAngle, vertexToCheck, -0.01f);
+				_checkBoundsCW = vertNudge;
+				Debug.DrawLine (_checkBoundsCW,transform.position,Color.magenta);
+//				MovePointOnCircle(0.0001f, vertexAngle, vertexToCheck, 0.01f);
+				MovePointOnCircle(0.1f, vertexAngle, vertexToCheck, -0.01f);
+				_checkBoundsACW = vertNudge;
+				Debug.DrawLine (_checkBoundsACW,transform.position,Color.yellow);			
+//				Debug.Log ("254");			
+				if (polygon[polyNumber].collider.bounds.Contains(_checkBoundsCW))		
+					{
+//					Debug.Log ("258");
+					ExtrapolateFirstVector(vertexToCheck);					
+					}				
+				if (polygon[polyNumber].collider.bounds.Contains(_checkBoundsACW))
+					{
+//					Debug.Log ("263");
+					ExtrapolateLastVector(vertexToCheck);					
+					}
+				if (!polygon[polyNumber].collider.bounds.Contains(_checkBoundsACW) && !polygon[polyNumber].collider.bounds.Contains(_checkBoundsCW)) // if vertex is on bottom side and dierectly below
+					{
+					FindVertexAngle(vertexToCheck,transform.position);
+					MovePointOnCircle(-0.1f, vertexAngle, vertexToCheck, 0.01f);
+					_checkBoundsCW = vertNudge;
+//					Debug.DrawLine (_checkBoundsCW,transform.position,Color.magenta);	
+					MovePointOnCircle(0.1f, vertexAngle, vertexToCheck, 0.01f);
+					_checkBoundsACW = vertNudge;
+					if (polygon[polyNumber].collider.bounds.Contains(_checkBoundsCW))		
+						{
+//						Debug.Log ("298");
+						ExtrapolateFirstVector(vertexToCheck);					
+						}				
+					if (polygon[polyNumber].collider.bounds.Contains(_checkBoundsACW))
+						{
+//						Debug.Log ("303");
+						ExtrapolateLastVector(vertexToCheck);					
+						}
+					}
+						
+//						_verticesListTemp = vertexToCheck;
+//					if (Physics.Raycast(vertexToCheck, (vertexToCheck- transform.position), out hit)) 	// raycasting outwards from first CW poly point, if it hits another poly, use that point...
+//						{
+//	//					Debug.Log (""+283+"");
+//			            vertexToCheck = hit.point;		
+//						Debug.DrawLine (_verticesListTemp,vertexToCheck,Color.yellow);
+//						}		
+//					else
+//						{
+//	//					Debug.Log (""+289+"");
+//						vertexToCheck = vertexToCheck+((vertexToCheck- transform.position)*Shadowlength); // if not, extrude point an arbitrary distance (Shadowlength)		
+//						Debug.DrawLine (_verticesListTemp,vertexToCheck,Color.cyan);
+//						}		
 //					}
-//				}		
+				}		
 		}
 		
 	
@@ -299,7 +331,8 @@ Vector3 rayPos;
 //			MovePointOnCircle(0, vertexAngle, vertexToAdd, -0.1f);				
 //			Vector3 _checkBounds = vertNudge;
 //			Debug.Log ("275"+_checkBounds+"");
-			MovePointOnCircle(-0.001f, vertexAngle, vertexToAdd, 0);
+//			MovePointOnCircle(-0.001f, vertexAngle, vertexToAdd, 0);
+			MovePointOnCircle(-0.05f, vertexAngle, vertexToAdd, 0);
 			_verticesListTemp = vertNudge;
 //			if (!polygon[polyNumber].collider.bounds.Contains(_checkBounds))
 //				{
