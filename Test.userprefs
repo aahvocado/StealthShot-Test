@@ -2,8 +2,7 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Assets/FindFaces.cs">
     <Files>
-      <File FileName="../Desktop/Apocalypse Golf Offline/Assets/FiringMechanism/AngleAndPowerMesh.cs" Line="150" Column="41" />
-      <File FileName="Assets/FindFaces.cs" Line="293" Column="62" />
+      <File FileName="Assets/FindFaces.cs" Line="144" Column="93" />
       <File FileName="Assets/Editor/VertexInspector.cs" Line="35" Column="52" />
     </Files>
     <Pads>

@@ -131,7 +131,8 @@ Vector3 rayPos;
 				{
 				if (normals[i].z == 1)
 					{					
-					verticesByNormals.Add(verticesTemp[i]);					
+					verticesByNormals.Add(verticesTemp[i]);
+//					Debug.Log ("One normal vertex");					
 					}		
 				}									
 			verticesTemp = verticesByNormals.ToArray();		
@@ -140,9 +141,10 @@ Vector3 rayPos;
 				{							
 					// adjust vertices for scale of poly
 					vertices[i] = new Vector3 (verticesTemp[i-1].x*polygon[_polyNumber].transform.lossyScale.x, verticesTemp[i-1].y*polygon[_polyNumber].transform.lossyScale.y,transform.position.z);
-					vertices[i] = (polygon[_polyNumber].transform.position - vertices[i]); // adjust for world position
+					vertices[i] = polygon[_polyNumber].transform.TransformPoint(vertices[i]);  //EDITING!!!
+//					vertices[i] = (polygon[_polyNumber].transform.position - vertices[i]); // adjust for world position
 					vertices[i].z = transform.position.z;	
-					
+					Debug.DrawLine (vertices[i],transform.position,Color.magenta);
 					Vector3 BoundTest = vertices[i]+ (vertices[i]-transform.position)*-0.001f ; // create a test vertex, move it towards player to avoid problems with linecast detection
 					if (!polygon[_polyNumber].collider.bounds.Contains(BoundTest)) // if test vertex isn't within bounds of poly, it's visible
 						{
@@ -150,11 +152,11 @@ Vector3 rayPos;
 						if (!Physics.Linecast (BoundTest, transform.position, out hit))
 							{
 							_verticesList.Add (vertices[i]);
-//							Debug.Log ("Pork "+vertices[i]+"" );
+							Debug.Log ("Pork "+vertices[i]+"" );
 							}
 						}
 				}						
-			Debug.Log ("PolyNumber - "+polygon[_polyNumber]+ "Vertices List Count - "+_verticesList.Count+"");			
+//			Debug.Log ("PolyNumber - "+polygon[_polyNumber]+ "Vertices List Count - "+_verticesList.Count+"");			
 			CompareVerticesAngles(_verticesList, transform.position);		// arrange single polygon's vertices into CW order					
 			AddVerticesToList(); 						// add to global vertices list
 			_verticesList.Clear(); 					
@@ -224,7 +226,7 @@ Vector3 rayPos;
 //		Debug.Log ("224");
 		if (verticesListTemp.Count==0)
 			{
-			polygon[polyNumber].renderer.enabled = false;	
+//			polygon[polyNumber].renderer.enabled = false;	
 			}
 //		}
 		verticesListTemp.Clear();
